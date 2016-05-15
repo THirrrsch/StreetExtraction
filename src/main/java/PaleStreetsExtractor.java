@@ -51,45 +51,41 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         ImagePlus straightLineImage = NewImage.createByteImage("straight line image", this._image.getWidth(), this._image.getHeight(), 1, 4);
         ImageProcessor straightLineProcessor = straightLineImage.getProcessor();
         byte[] straightLinePixels = (byte[]) straightLineProcessor.getPixels();
-        Iterator result = this._allBlobs.iterator();
 
-        while(true) {
-            Blob blob;
-            do {
-                if(!result.hasNext()) {
-                    straightLineImage.show();
-                    straightLineImage.updateAndDraw();
-                    ManyBlobs var21 = new ManyBlobs(straightLineImage);
-                    var21.findConnectedComponents();
-                    return var21;
-                }
+        for (Blob blob : _allBlobs) {
+            if (blob.getOuterContour().npoints >= this._sampleRate) {
+                int[] contourX = blob.getOuterContour().xpoints;
+                int[] contourY = blob.getOuterContour().ypoints;
+                int max = blob.getOuterContour().npoints - this._sampleRate;
 
-                blob = (Blob)result.next();
-            } while(blob.getOuterContour().npoints < this._sampleRate);
+                for(int i = 0; i <= max; i += this._sampleRate) {
+                    int startX = contourX[i];
+                    int startY = contourY[i];
+                    int endX = contourX[i + this._sampleRate - 1];
+                    int endY = contourY[i + this._sampleRate - 1];
 
-            int[] contourX = blob.getOuterContour().xpoints;
-            int[] contourY = blob.getOuterContour().ypoints;
-            int max = blob.getOuterContour().npoints - this._sampleRate;
+                    if(i == 0) {
+                        angleCurrent = this.getAngle(startX, endX, startY, endY);
+                    } else {
+                        angleOld = angleCurrent;
+                        angleCurrent = this.getAngle(startX, endX, startY, endY);
+                        angleDiff = this.getAngleDiff(angleCurrent, angleOld);
 
-            for(int i = 0; i < max; i += this._sampleRate) {
-                int startX = contourX[i];
-                int startY = contourY[i];
-                int endX = contourX[i + this._sampleRate];
-                int endY = contourY[i + this._sampleRate];
-                if(i == 0) {
-                    angleCurrent = this.getAngle(startX, endX, startY, endY);
-                } else {
-                    angleOld = angleCurrent;
-                    angleCurrent = this.getAngle(startX, endX, startY, endY);
-                    angleDiff = this.getAngleDiff(angleCurrent, angleOld);
-                    if(angleDiff < (double)this._maxAngleDiff) {
-                        for(int j = 0; j < this._sampleRate; ++j) {
-                            straightLinePixels[contourY[i + j] * this._width + contourX[i + j]] = 0;
+                        if(angleDiff < this._maxAngleDiff) {
+                            for(int j = 0; j < this._sampleRate; ++j) {
+                                straightLinePixels[contourY[i + j] * this._width + contourX[i + j]] = 0;
+                            }
                         }
                     }
                 }
             }
         }
+
+        straightLineImage.show();
+        straightLineImage.updateAndDraw();
+        ManyBlobs result = new ManyBlobs(straightLineImage);
+        result.findConnectedComponents();
+        return result;
     }
 
     private ManyBlobs getLongBlobs(ManyBlobs inputBlobs) {
