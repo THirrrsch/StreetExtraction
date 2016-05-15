@@ -13,37 +13,14 @@
 	</parent>
 
 	<groupId>sc.fiji</groupId>
-	<artifactId>Process_Pixels</artifactId>
+	<artifactId>Extract_Streets</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
 
-	<name>plugins/Process_Pixels.jar</name>
-	<description>A Maven project implementing an ImageJ 1.x plugin</description>
-
-	<developers>
-		<developer>
-			<id>dscho</id>
-			<name>Johannes Schindelin</name>
-			<email>johannes.schindelin@gmx.de</email>
-			<url>http://loci.wisc.edu/people/johannes-schindelin</url>
-			<organization>UW-Madison LOCI</organization>
-			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
-			<roles>
-				<role>architect</role>
-				<role>developer</role>
-			</roles>
-			<timezone>-6</timezone>
-		</developer>
-	</developers>
-
-	<scm>
-		<connection>scm:git:git://github.com/imagej/minimal-ij1-plugin</connection>
-		<developerConnection>scm:git:git@github.com:imagej/minimal-ij1-plugin</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/imagej/minimal-ij1-plugin</url>
-	</scm>
+	<name>plugins/Extract_Streets.jar</name>
+	<description>An ImageJ plugin extracting streets from Balbi maps.</description>
 
 	<properties>
-		<main-class>Process_Pixels</main-class>
+		<main-class>Extract_Streets</main-class>
 	</properties>
 
 	<dependencies>
