@@ -23,40 +23,56 @@ public class Extract_Streets implements PlugInFilter {
         dialog.addNumericField("Sample rate", Constants.SAMPLE_RATE, 0);
         dialog.addNumericField("Max angle diff for straight lines", Constants.MAX_ANGLE_DIFF, 0);
         dialog.addNumericField("Min contour length", Constants.MIN_CONTOUR_LENGTH, 0);
+        dialog.addNumericField("Color lookup radius", Constants.COLOR_LOOKUP_RADIUS, 0);
+        dialog.addNumericField("Color lookup ratio", Constants.COLOR_LOOKUP_RATIO, 1);
+        dialog.addNumericField("Min hue pale", Constants.MIN_HUE_PALE, 0);
+        dialog.addNumericField("Max hue pale", Constants.MAX_HUE_PALE, 0);
+        dialog.addNumericField("Min saturation pale", Constants.MIN_SATURATION_PALE, 0);
+        dialog.addNumericField("Max saturation pale", Constants.MAX_SATURATION_PALE, 0);
+        dialog.addNumericField("Min brightness pale", Constants.MIN_BRIGHTNESS_PALE, 0);
+        dialog.addNumericField("Max brightness pale", Constants.MAX_BRIGHTNESS_PALE, 0);
         dialog.addNumericField("Line following sample rate", Constants.CONTOUR_FOLLOW_SAMPLE_RATE, 0);
         dialog.addNumericField("Cone angle", Constants.CONE_ANGLE, 0);
         dialog.addNumericField("Cone length", Constants.CONE_LENGTH, 0);
         dialog.addNumericField("Max angle diff for following lines", Constants.MAX_ANGLE_DIFF_CONES, 0);
         dialog.addCheckbox("Draw cones", false);
         dialog.addPanel(new Panel());
-        dialog.addNumericField("Min hue", Constants.MIN_HUE, 0);
-        dialog.addNumericField("Max hue", Constants.MAX_HUE, 0);
-        dialog.addNumericField("Min saturation", Constants.MIN_SATURATION, 0);
-        dialog.addNumericField("Max saturation", Constants.MAX_SATURATION, 0);
-        dialog.addNumericField("Min brightness", Constants.MIN_BRIGHTNESS, 0);
-        dialog.addNumericField("Max brightness", Constants.MAX_BRIGHTNESS, 0);
+        dialog.addNumericField("Min hue colored", Constants.MIN_HUE_COLORED, 0);
+        dialog.addNumericField("Max hue colored", Constants.MAX_HUE_COLORED, 0);
+        dialog.addNumericField("Min saturation colored", Constants.MIN_SATURATION_COLORED, 0);
+        dialog.addNumericField("Max saturation colored", Constants.MAX_SATURATION_COLORED, 0);
+        dialog.addNumericField("Min brightness colored", Constants.MIN_BRIGHTNESS_COLORED, 0);
+        dialog.addNumericField("Max brightness colored", Constants.MAX_BRIGHTNESS_COLORED, 0);
         dialog.showDialog();
 
         if(!dialog.wasCanceled()) {
             int filteredImage = (int)dialog.getNextNumber();
             int maxAngleDiff = (int)dialog.getNextNumber();
             int minContourLength = (int)dialog.getNextNumber();
+            int colorLookupRadius = (int) dialog.getNextNumber();
+            double colorLookupRatio = (double) dialog.getNextNumber();
+            int minHuePale = (int)dialog.getNextNumber();
+            int maxHuePale = (int)dialog.getNextNumber();
+            int minSatPale = (int)dialog.getNextNumber();
+            int maxSatPale = (int)dialog.getNextNumber();
+            int minBrightPale = (int)dialog.getNextNumber();
+            int maxBrightPale = (int)dialog.getNextNumber();
             int lineFollowingSampleRate = (int)dialog.getNextNumber();
             int coneAngle = (int)dialog.getNextNumber();
             int coneLength = (int)dialog.getNextNumber();
             int maxAngleDiff2 = (int)dialog.getNextNumber();
             boolean drawCones = dialog.getNextBoolean();
-            int minHue = (int)dialog.getNextNumber();
-            int maxHue = (int)dialog.getNextNumber();
-            int minSat = (int)dialog.getNextNumber();
-            int maxSat = (int)dialog.getNextNumber();
-            int minBrght = (int)dialog.getNextNumber();
-            int maxBrght = (int)dialog.getNextNumber();
+            int minHueColored = (int)dialog.getNextNumber();
+            int maxHueColored = (int)dialog.getNextNumber();
+            int minSatColored = (int)dialog.getNextNumber();
+            int maxSatColored = (int)dialog.getNextNumber();
+            int minBrightColored = (int)dialog.getNextNumber();
+            int maxBrightColored = (int)dialog.getNextNumber();
             StreetsExtractor extractor;
             if(dialog.getNextChoice().equals("pale")) {
-                extractor = new PaleStreetsExtractor(this._image, filteredImage, maxAngleDiff, minContourLength, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2, drawCones);
+                extractor = new PaleStreetsExtractor(this._image, filteredImage, maxAngleDiff, minContourLength, colorLookupRadius, colorLookupRatio, minHuePale, maxHuePale, minSatPale, maxSatPale, minBrightPale, maxBrightPale, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2, drawCones);
             } else {
-                extractor = new ColoredStreetsExtractor(this._image, minHue, maxHue, minSat, maxSat, minBrght, maxBrght);
+                extractor = new ColoredStreetsExtractor(this._image, minHueColored, maxHueColored, minSatColored, maxSatColored, minBrightColored, maxBrightColored);
             }
 
             ImagePlus filteredImage1 = extractor.process();

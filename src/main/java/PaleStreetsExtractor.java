@@ -3,30 +3,47 @@ import blob.ManyBlobs;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.process.ImageProcessor;
-import java.awt.Point;
-import java.util.Iterator;
+
+import java.awt.*;
 import java.util.List;
 
 public class PaleStreetsExtractor implements StreetsExtractor {
     private final boolean _drawCones;
     private ImagePlus _image;
     private ImagePlus _longLineImage;
+    private ImagePlus _coloredBlobsImage;
     private final ManyBlobs _allBlobs;
     private final int _width;
     private final int _height;
     private final int _sampleRate;
     private final int _maxAngleDiff;
     private final int _minContourLength;
+    private final int _colorLookupRadius;
+    private final double _colorLookupRatio;
+    private final int _minHue;
+    private final int _maxHue;
+    private final int _minSat;
+    private final int _maxSat;
+    private final int _minBright;
+    private final int _maxBright;
     private final int _lineFollowingSampleRate;
     private final int _coneAngle;
     private final int _coneLength;
     private final int _maxAngleDiffCone;
 
-    public PaleStreetsExtractor(ImagePlus image, int sampleRate, int maxAngleDiff, int minContourLength, int lineFollowingSampleRate, int coneAngle, int coneLength, int maxAngleDiffCone, boolean drawCones) {
+    public PaleStreetsExtractor(ImagePlus image, int sampleRate, int maxAngleDiff, int minContourLength, int colorLookupRadius, double colorLookupRatio, int minHue, int maxHue, int minSat, int maxSat, int minBright, int maxBright, int lineFollowingSampleRate, int coneAngle, int coneLength, int maxAngleDiffCone, boolean drawCones) {
         this._image = image;
         this._sampleRate = sampleRate;
         this._maxAngleDiff = maxAngleDiff;
         this._minContourLength = minContourLength;
+        this._colorLookupRadius = colorLookupRadius;
+        this._colorLookupRatio = colorLookupRatio;
+        this._minHue = minHue;
+        this._maxHue = maxHue;
+        this._minSat = minSat;
+        this._maxSat = maxSat;
+        this._minBright = minBright;
+        this._maxBright = maxBright;
         this._lineFollowingSampleRate = lineFollowingSampleRate;
         this._coneAngle = coneAngle;
         this._coneLength = coneLength;
@@ -41,6 +58,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     public ImagePlus process() {
         ManyBlobs straighLineBlobs = this.getStraightLineBlobs();
         ManyBlobs longBlobs = this.getLongBlobs(straighLineBlobs);
+        ManyBlobs coloredBlobs = this.getColoredBlobs(longBlobs);
         return this.getStreetImageByFollowingLines(longBlobs);
     }
 
@@ -103,6 +121,18 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         this._longLineImage.show();
         this._longLineImage.updateAndDraw();
         result.createLineOrdering();
+        return result;
+    }
+
+    private ManyBlobs getColoredBlobs(ManyBlobs inputBlobs) {
+        _coloredBlobsImage = NewImage.createByteImage("colored blobs image", this._image.getWidth(), this._image.getHeight(), 1, 4);
+        ImageProcessor coloredBlobsImageProcessor = this._coloredBlobsImage.getProcessor();
+        ManyBlobs result = new ManyBlobs();
+
+        for (Blob blob : inputBlobs) {
+
+        }
+
         return result;
     }
 
