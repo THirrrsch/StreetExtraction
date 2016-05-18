@@ -3,7 +3,7 @@ public interface Constants {
     double MAX_ANGLE_DIFF = 20.0D;
     int MIN_CONTOUR_LENGTH = 25;
     int COLOR_LOOKUP_RADIUS = 10;
-    double COLOR_LOOKUP_RATIO = 0.4;
+    double COLOR_LOOKUP_RATIO = 0.7;
     int MIN_HUE_PALE = 15;
     int MAX_HUE_PALE = 35;
     int MIN_SATURATION_PALE = 0;

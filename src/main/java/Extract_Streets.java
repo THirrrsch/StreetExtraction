@@ -90,7 +90,7 @@ public class Extract_Streets implements PlugInFilter {
         String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
         System.setProperty("plugins.dir", pluginsDir);
         new ImageJ();
-        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\paleStreets\\cannysharpened.png");
+        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\input\\manyStreets.png");
         image.show();
         IJ.runPlugIn(clazz.getName(), "");
     }

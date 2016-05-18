@@ -12,7 +12,6 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     private final boolean _drawCones;
     private ImagePlus _originalImage;
     private ImagePlus _longLineImage;
-    private ImagePlus _coloredBlobsImage;
     private final ManyBlobs _allBlobs;
     private final int _width;
     private final int _height;
@@ -35,8 +34,8 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     private final int _coneLength;
     private final int _maxAngleDiffCone;
 
-    public PaleStreetsExtractor(ImagePlus image, ImagePlus cannyImage, int sampleRate, int maxAngleDiff, int minContourLength, int colorLookupRadius, double colorLookupRatio, int minHue, int maxHue, int minSat, int maxSat, int minBright, int maxBright, int lineFollowingSampleRate, int coneAngle, int coneLength, int maxAngleDiffCone, boolean drawCones) {
-        _originalImage = image;
+    public PaleStreetsExtractor(ImagePlus originalImage, ImagePlus cannyImage, int sampleRate, int maxAngleDiff, int minContourLength, int colorLookupRadius, double colorLookupRatio, int minHue, int maxHue, int minSat, int maxSat, int minBright, int maxBright, int lineFollowingSampleRate, int coneAngle, int coneLength, int maxAngleDiffCone, boolean drawCones) {
+        _originalImage = originalImage;
         _sampleRate = sampleRate;
         _maxAngleDiff = maxAngleDiff;
         _minContourLength = minContourLength;
@@ -63,7 +62,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         _brightness = new byte[_width * _height];
         colorProcessor.getHSB(_hue, _saturation, _brightness);
 
-        _allBlobs = new ManyBlobs(_originalImage);
+        _allBlobs = new ManyBlobs(cannyImage);
         _allBlobs.findConnectedComponents();
     }
 
@@ -137,20 +136,17 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     }
 
     private ManyBlobs getColoredBlobs(ManyBlobs inputBlobs) {
-        ColorProcessor colorProcessor = new ColorProcessor(_originalImage.getImage());
-        byte[] h = new byte[_width * _height];
-        byte[] s = new byte[_width * _height];
-        byte[] b = new byte[_width * _height];
-        colorProcessor.getHSB(h, s, b);
-
-        _coloredBlobsImage = NewImage.createByteImage("colored blobs image", _originalImage.getWidth(), _height, 1, 4);
-        ImageProcessor coloredBlobsImageProcessor = _coloredBlobsImage.getProcessor();
+        ImagePlus coloredBlobsImage = NewImage.createByteImage("colored blobs image", _originalImage.getWidth(), _height, 1, 4);
+        ImageProcessor coloredBlobsImageProcessor = coloredBlobsImage.getProcessor();
         ManyBlobs result = new ManyBlobs();
+        byte[] longLinePixels = (byte[]) _longLineImage.getProcessor().getPixels();
 
         for (Blob blob : inputBlobs) {
             int[] contourX = blob.getLineX();
             int[] contourY = blob.getLineY();
             int max = (blob.getOuterContour().npoints / 2) - _sampleRate;
+            double backgroundRatio = 0;
+            int count = 0;
 
             for(int i = 0; i <= max; i += _sampleRate) {
                 int vecX = contourX[i + _sampleRate - 1] - contourX[i];
@@ -176,18 +172,32 @@ public class PaleStreetsExtractor implements StreetsExtractor {
                 List<Point> pointsClock = Utils.getBresenhamPoints(startX, startY, endXClock, endYClock);
                 List<Point> pointsCounterclock = Utils.getBresenhamPoints(startX, startY, endXCounterclock, endYCounterclock);
 
+                if (contourX[0] == 805 && contourY[0] == 522) {
+                    for (Point p : pointsClock) {
+                        longLinePixels[p.y * _width + p.x] = -56;
+                    }
+
+                    for (Point p : pointsCounterclock) {
+                        longLinePixels[p.y * _width + p.x] = -56;
+                    }
+                }
+
                 double clockwiseRatio = getBackgroundRatio(pointsClock);
                 double counterclockwiseRatio = getBackgroundRatio(pointsCounterclock);
 
-                if ((clockwiseRatio + counterclockwiseRatio) / 2 >= _colorLookupRatio) {
-                    blob.draw(coloredBlobsImageProcessor);
-                    result.add(blob);
-                }
+                backgroundRatio += ((clockwiseRatio + counterclockwiseRatio) / 2);
+                count++;
+            }
+
+            backgroundRatio /= count;
+            if (backgroundRatio >= _colorLookupRatio) {
+                blob.draw(coloredBlobsImageProcessor);
+                result.add(blob);
             }
         }
 
-        _coloredBlobsImage.show();
-        _coloredBlobsImage.updateAndDraw();
+        coloredBlobsImage.show();
+        coloredBlobsImage.updateAndDraw();
 
         return result;
     }
@@ -199,7 +209,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         for (Point p : points) {
             if (this.isInImageRange(p.x, p.y)) {
                 pointsCount++;
-                int index = p.y * _width + p.y;
+                int index = p.y * _width + p.x;
                 int hue = _hue[index] & 255;
                 int saturation = _saturation[index] & 255;
                 int brightness = _brightness[index] & 255;
