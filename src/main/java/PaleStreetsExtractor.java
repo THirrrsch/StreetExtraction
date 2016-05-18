@@ -69,8 +69,8 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     public ImagePlus process() {
         ManyBlobs straighLineBlobs = this.getStraightLineBlobs();
         ManyBlobs longBlobs = this.getLongBlobs(straighLineBlobs);
-        ManyBlobs coloredBlobs = this.getColoredBlobs(longBlobs);
-        return this.getStreetImageByFollowingLines(coloredBlobs);
+        ManyBlobs coneFollowingBlobs = this.getConeFollowingBlobs(longBlobs);
+        return this.getColoredNeighborhoodImage(coneFollowingBlobs);
     }
 
     private ManyBlobs getStraightLineBlobs() {
@@ -135,11 +135,9 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         return result;
     }
 
-    private ManyBlobs getColoredBlobs(ManyBlobs inputBlobs) {
+    private ImagePlus getColoredNeighborhoodImage(ManyBlobs inputBlobs) {
         ImagePlus coloredBlobsImage = NewImage.createByteImage("colored blobs image", _originalImage.getWidth(), _height, 1, 4);
         ImageProcessor coloredBlobsImageProcessor = coloredBlobsImage.getProcessor();
-        ManyBlobs result = new ManyBlobs();
-        byte[] longLinePixels = (byte[]) _longLineImage.getProcessor().getPixels();
 
         for (Blob blob : inputBlobs) {
             int[] contourX = blob.getLineX();
@@ -172,15 +170,59 @@ public class PaleStreetsExtractor implements StreetsExtractor {
                 List<Point> pointsClock = Utils.getBresenhamPoints(startX, startY, endXClock, endYClock);
                 List<Point> pointsCounterclock = Utils.getBresenhamPoints(startX, startY, endXCounterclock, endYCounterclock);
 
-                if (contourX[0] == 805 && contourY[0] == 522) {
-                    for (Point p : pointsClock) {
-                        longLinePixels[p.y * _width + p.x] = -56;
-                    }
+                double clockwiseRatio = getBackgroundRatio(pointsClock);
+                double counterclockwiseRatio = getBackgroundRatio(pointsCounterclock);
 
-                    for (Point p : pointsCounterclock) {
-                        longLinePixels[p.y * _width + p.x] = -56;
-                    }
-                }
+                backgroundRatio += ((clockwiseRatio + counterclockwiseRatio) / 2);
+                count++;
+            }
+
+            backgroundRatio /= count;
+            if (backgroundRatio >= _colorLookupRatio) {
+                blob.draw(coloredBlobsImageProcessor);
+            }
+        }
+
+        coloredBlobsImage.updateImage();
+        return coloredBlobsImage;
+    }
+
+    /*
+    private ManyBlobs getColoredBlobs(ManyBlobs inputBlobs) {
+        ImagePlus coloredBlobsImage = NewImage.createByteImage("colored blobs image", _originalImage.getWidth(), _height, 1, 4);
+        ImageProcessor coloredBlobsImageProcessor = coloredBlobsImage.getProcessor();
+        ManyBlobs result = new ManyBlobs();
+
+        for (Blob blob : inputBlobs) {
+            int[] contourX = blob.getLineX();
+            int[] contourY = blob.getLineY();
+            int max = (blob.getOuterContour().npoints / 2) - _sampleRate;
+            double backgroundRatio = 0;
+            int count = 0;
+
+            for(int i = 0; i <= max; i += _sampleRate) {
+                int vecX = contourX[i + _sampleRate - 1] - contourX[i];
+                int vecY = contourY[i + _sampleRate - 1] - contourY[i];
+
+                double length = Math.sqrt(vecX*vecX + vecY*vecY);
+                double vecXNorm = vecX * (1 / length);
+                double vecYNorm = vecY * (1 / length);
+
+                double vecXClock = -vecYNorm * _colorLookupRadius;
+                double vecYClock = vecXNorm * _colorLookupRadius;
+                double vecXCounterclock = vecYNorm * _colorLookupRadius;
+                double vecYCounterclock = -vecXNorm * _colorLookupRadius;
+
+                int startX = contourX[i + _sampleRate / 2];
+                int startY = contourY[i + _sampleRate / 2];
+
+                int endXClock = (int) (startX + vecXClock);
+                int endYClock = (int) (startY + vecYClock);
+                int endXCounterclock = (int) (startX + vecXCounterclock);
+                int endYCounterclock = (int) (startY + vecYCounterclock);
+
+                List<Point> pointsClock = Utils.getBresenhamPoints(startX, startY, endXClock, endYClock);
+                List<Point> pointsCounterclock = Utils.getBresenhamPoints(startX, startY, endXCounterclock, endYCounterclock);
 
                 double clockwiseRatio = getBackgroundRatio(pointsClock);
                 double counterclockwiseRatio = getBackgroundRatio(pointsCounterclock);
@@ -201,6 +243,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
 
         return result;
     }
+    */
 
     private double getBackgroundRatio(List<Point> points) {
         double pointsCount = 0;
@@ -223,6 +266,61 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         return backgroundCount / pointsCount;
     }
 
+    private ManyBlobs getConeFollowingBlobs(ManyBlobs longBlobs) {
+        ImagePlus coneFollowingImage = NewImage.createByteImage("cone following image", _width, _height, 1, 4);
+        ImageProcessor coneFollowingProcessor = coneFollowingImage.getProcessor();
+
+        for (Blob blob : longBlobs) {
+            int[] contourX = blob.getLineX();
+            int[] contourY = blob.getLineY();
+            int end = blob.getOuterContour().npoints / 2;
+            boolean firstPart = true;
+
+            for (int i = 0; i < 2; ++i) {
+                int x1 = firstPart ? contourX[_lineFollowingSampleRate] : contourX[end - _lineFollowingSampleRate];
+                int y1 = firstPart ? contourY[_lineFollowingSampleRate] : contourY[end - _lineFollowingSampleRate];
+                int startX = firstPart ? contourX[0] : contourX[end];
+                int startY = firstPart ? contourY[0] : contourY[end];
+                double baseAngle = this.getAngle(x1, startX, y1, startY);
+                int offset = 0;
+
+                while (offset < _coneAngle) {
+                    double currentAngle = baseAngle + (double) offset;
+                    double currentAngleRAD = Math.PI * currentAngle / 180;
+                    int endX = (int) ((double) startX + (double) _coneLength * Math.cos(currentAngleRAD));
+                    int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
+                    List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
+
+                    if (this.couldFollow(points, longBlobs, baseAngle, coneFollowingProcessor)) {
+                        blob.draw(coneFollowingProcessor);
+                        break;
+                    }
+
+                    if (offset == 0) {
+                        offset = -1;
+                    } else if (offset < 0) {
+                        offset *= -1;
+                    } else {
+                        ++offset;
+                        offset *= -1;
+                    }
+                }
+
+                firstPart = !firstPart;
+            }
+        }
+
+        coneFollowingImage.show();
+        coneFollowingImage.updateAndDraw();
+
+        ManyBlobs result = new ManyBlobs(coneFollowingImage);
+        result.findConnectedComponents();
+        result.createLineOrdering();
+
+        return result;
+    }
+
+    /*
     private ImagePlus getStreetImageByFollowingLines(ManyBlobs longBlobs) {
         ImagePlus streetImage = NewImage.createByteImage("street image", _width, _height, 1, 4);
         ImageProcessor streetImageProcessor = streetImage.getProcessor();
@@ -281,6 +379,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         streetImage.updateImage();
         return streetImage;
     }
+    */
 
     private boolean couldFollow(List<Point> points, ManyBlobs longBlobs, double baseAngle, ImageProcessor streetImageProcessor) {
         for (Blob blob : longBlobs) {
