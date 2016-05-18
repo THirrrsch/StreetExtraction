@@ -4,7 +4,8 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-import java.awt.Panel;
+
+import java.awt.*;
 
 public class Extract_Streets implements PlugInFilter {
     private ImagePlus _image;
@@ -50,7 +51,7 @@ public class Extract_Streets implements PlugInFilter {
             int maxAngleDiff = (int)dialog.getNextNumber();
             int minContourLength = (int)dialog.getNextNumber();
             int colorLookupRadius = (int) dialog.getNextNumber();
-            double colorLookupRatio = (double) dialog.getNextNumber();
+            double colorLookupRatio = dialog.getNextNumber();
             int minHuePale = (int)dialog.getNextNumber();
             int maxHuePale = (int)dialog.getNextNumber();
             int minSatPale = (int)dialog.getNextNumber();
@@ -70,7 +71,8 @@ public class Extract_Streets implements PlugInFilter {
             int maxBrightColored = (int)dialog.getNextNumber();
             StreetsExtractor extractor;
             if(dialog.getNextChoice().equals("pale")) {
-                extractor = new PaleStreetsExtractor(this._image, filteredImage, maxAngleDiff, minContourLength, colorLookupRadius, colorLookupRatio, minHuePale, maxHuePale, minSatPale, maxSatPale, minBrightPale, maxBrightPale, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2, drawCones);
+                ImagePlus cannyImage = IJ.openImage();
+                extractor = new PaleStreetsExtractor(this._image, cannyImage, filteredImage, maxAngleDiff, minContourLength, colorLookupRadius, colorLookupRatio, minHuePale, maxHuePale, minSatPale, maxSatPale, minBrightPale, maxBrightPale, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2, drawCones);
             } else {
                 extractor = new ColoredStreetsExtractor(this._image, minHueColored, maxHueColored, minSatColored, maxSatColored, minBrightColored, maxBrightColored);
             }
