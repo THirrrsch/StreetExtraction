@@ -67,13 +67,19 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     }
 
     public ImagePlus process() {
-        ManyBlobs straighLineBlobs = this.getStraightLineBlobs();
+        ManyBlobs straighLineBlobs = this.getStraightLineBlobs(_allBlobs);
         ManyBlobs longBlobs = this.getLongBlobs(straighLineBlobs);
-        ManyBlobs coneFollowingBlobs = this.getConeFollowingBlobs(longBlobs);
-        return this.getColoredNeighborhoodImage(coneFollowingBlobs);
+        return this.getStreetImageByFollowingLines(longBlobs);
+
+        //ManyBlobs coloredBlobs = this.getColoredBlobs(longBlobs);
+        //return this.getStreetImageByFollowingLines(coloredBlobs);
+
+        //ManyBlobs coneBlobesConnected = this.getConeFollowingBlobs(longBlobs);
+        //ManyBlobs coneBlobsDisconnected = this.getStraightLineBlobs(coneBlobesConnected);
+        //return this.getColoredNeighborhoodImage(coneBlobsDisconnected);
     }
 
-    private ManyBlobs getStraightLineBlobs() {
+    private ManyBlobs getStraightLineBlobs(ManyBlobs inputBlobs) {
         double angleCurrent = 0;
         double angleOld;
         double angleDiff;
@@ -81,17 +87,17 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         ImageProcessor straightLineProcessor = straightLineImage.getProcessor();
         byte[] straightLinePixels = (byte[]) straightLineProcessor.getPixels();
 
-        for (Blob blob : _allBlobs) {
+        for (Blob blob : inputBlobs) {
             if (blob.getOuterContour().npoints >= _sampleRate) {
                 int[] contourX = blob.getOuterContour().xpoints;
                 int[] contourY = blob.getOuterContour().ypoints;
                 int max = blob.getOuterContour().npoints - _sampleRate;
 
-                for(int i = 0; i <= max; i += _sampleRate) {
+                for(int i = 0; i < max; i += _sampleRate) {
                     int startX = contourX[i];
                     int startY = contourY[i];
-                    int endX = contourX[i + _sampleRate - 1];
-                    int endY = contourY[i + _sampleRate - 1];
+                    int endX = contourX[i + _sampleRate];
+                    int endY = contourY[i + _sampleRate];
 
                     if(i == 0) {
                         angleCurrent = this.getAngle(startX, endX, startY, endY);
@@ -135,11 +141,77 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         return result;
     }
 
+    /*
+    private ManyBlobs getConeFollowingBlobs(ManyBlobs longBlobs) {
+        ImagePlus coneFollowingImage = NewImage.createByteImage("cone following image", _width, _height, 1, 4);
+        ImageProcessor coneFollowingProcessor = coneFollowingImage.getProcessor();
+        //ManyBlobs result = new ManyBlobs();
+
+        for (Blob blob : longBlobs) {
+            int[] contourX = blob.getLineX();
+            int[] contourY = blob.getLineY();
+            int end = blob.getOuterContour().npoints / 2;
+            boolean firstPart = true;
+
+            for (int i = 0; i < 2; ++i) {
+                int x1 = firstPart ? contourX[_lineFollowingSampleRate] : contourX[end - _lineFollowingSampleRate];
+                int y1 = firstPart ? contourY[_lineFollowingSampleRate] : contourY[end - _lineFollowingSampleRate];
+                int startX = firstPart ? contourX[0] : contourX[end];
+                int startY = firstPart ? contourY[0] : contourY[end];
+                double baseAngle = this.getAngle(x1, startX, y1, startY);
+                int offset = 0;
+
+                while (offset < _coneAngle) {
+                    double currentAngle = baseAngle + (double) offset;
+                    double currentAngleRAD = Math.PI * currentAngle / 180;
+                    int endX = (int) ((double) startX + (double) _coneLength * Math.cos(currentAngleRAD));
+                    int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
+                    List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
+
+                    if (this.couldFollow(points, longBlobs, baseAngle, coneFollowingProcessor)) {
+                        blob.draw(coneFollowingProcessor);
+
+                        //TODO DELETE THIS LINE IF CONES ARE CONNECTED
+                        //result.add(blob);
+                        break;
+                    }
+
+                    if (offset == 0) {
+                        offset = -1;
+                    } else if (offset < 0) {
+                        offset *= -1;
+                    } else {
+                        ++offset;
+                        offset *= -1;
+                    }
+                }
+
+                firstPart = !firstPart;
+            }
+        }
+
+        coneFollowingImage.show();
+        coneFollowingImage.updateAndDraw();
+
+        ManyBlobs result = new ManyBlobs(coneFollowingImage);
+        result.findConnectedComponents();
+
+        return result;
+    }
+    */
+
+    /*
     private ImagePlus getColoredNeighborhoodImage(ManyBlobs inputBlobs) {
+        inputBlobs.createLineOrdering();
+
         ImagePlus coloredBlobsImage = NewImage.createByteImage("colored blobs image", _originalImage.getWidth(), _height, 1, 4);
         ImageProcessor coloredBlobsImageProcessor = coloredBlobsImage.getProcessor();
 
         for (Blob blob : inputBlobs) {
+            //int[] contourX = blob.getOuterContour().xpoints;
+            //int[] contourY = blob.getOuterContour().ypoints;
+            //int max = blob.getOuterContour().npoints - _sampleRate;
+
             int[] contourX = blob.getLineX();
             int[] contourY = blob.getLineY();
             int max = (blob.getOuterContour().npoints / 2) - _sampleRate;
@@ -186,6 +258,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         coloredBlobsImage.updateImage();
         return coloredBlobsImage;
     }
+    */
 
     /*
     private ManyBlobs getColoredBlobs(ManyBlobs inputBlobs) {
@@ -245,82 +318,6 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     }
     */
 
-    private double getBackgroundRatio(List<Point> points) {
-        double pointsCount = 0;
-        double backgroundCount = 0;
-
-        for (Point p : points) {
-            if (this.isInImageRange(p.x, p.y)) {
-                pointsCount++;
-                int index = p.y * _width + p.x;
-                int hue = _hue[index] & 255;
-                int saturation = _saturation[index] & 255;
-                int brightness = _brightness[index] & 255;
-
-                if(hue >= _minHue && hue <= _maxHue && saturation >= _minSat && saturation <= _maxSat && brightness >= _minBright && brightness <= _maxBright) {
-                    backgroundCount++;
-                }
-            }
-        }
-
-        return backgroundCount / pointsCount;
-    }
-
-    private ManyBlobs getConeFollowingBlobs(ManyBlobs longBlobs) {
-        ImagePlus coneFollowingImage = NewImage.createByteImage("cone following image", _width, _height, 1, 4);
-        ImageProcessor coneFollowingProcessor = coneFollowingImage.getProcessor();
-
-        for (Blob blob : longBlobs) {
-            int[] contourX = blob.getLineX();
-            int[] contourY = blob.getLineY();
-            int end = blob.getOuterContour().npoints / 2;
-            boolean firstPart = true;
-
-            for (int i = 0; i < 2; ++i) {
-                int x1 = firstPart ? contourX[_lineFollowingSampleRate] : contourX[end - _lineFollowingSampleRate];
-                int y1 = firstPart ? contourY[_lineFollowingSampleRate] : contourY[end - _lineFollowingSampleRate];
-                int startX = firstPart ? contourX[0] : contourX[end];
-                int startY = firstPart ? contourY[0] : contourY[end];
-                double baseAngle = this.getAngle(x1, startX, y1, startY);
-                int offset = 0;
-
-                while (offset < _coneAngle) {
-                    double currentAngle = baseAngle + (double) offset;
-                    double currentAngleRAD = Math.PI * currentAngle / 180;
-                    int endX = (int) ((double) startX + (double) _coneLength * Math.cos(currentAngleRAD));
-                    int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
-                    List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
-
-                    if (this.couldFollow(points, longBlobs, baseAngle, coneFollowingProcessor)) {
-                        blob.draw(coneFollowingProcessor);
-                        break;
-                    }
-
-                    if (offset == 0) {
-                        offset = -1;
-                    } else if (offset < 0) {
-                        offset *= -1;
-                    } else {
-                        ++offset;
-                        offset *= -1;
-                    }
-                }
-
-                firstPart = !firstPart;
-            }
-        }
-
-        coneFollowingImage.show();
-        coneFollowingImage.updateAndDraw();
-
-        ManyBlobs result = new ManyBlobs(coneFollowingImage);
-        result.findConnectedComponents();
-        result.createLineOrdering();
-
-        return result;
-    }
-
-    /*
     private ImagePlus getStreetImageByFollowingLines(ManyBlobs longBlobs) {
         ImagePlus streetImage = NewImage.createByteImage("street image", _width, _height, 1, 4);
         ImageProcessor streetImageProcessor = streetImage.getProcessor();
@@ -378,6 +375,28 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         _longLineImage.updateAndDraw();
         streetImage.updateImage();
         return streetImage;
+    }
+
+    /*
+    private double getBackgroundRatio(List<Point> points) {
+        double pointsCount = 0;
+        double backgroundCount = 0;
+
+        for (Point p : points) {
+            if (this.isInImageRange(p.x, p.y)) {
+                pointsCount++;
+                int index = p.y * _width + p.x;
+                int hue = _hue[index] & 255;
+                int saturation = _saturation[index] & 255;
+                int brightness = _brightness[index] & 255;
+
+                if(hue >= _minHue && hue <= _maxHue && saturation >= _minSat && saturation <= _maxSat && brightness >= _minBright && brightness <= _maxBright) {
+                    backgroundCount++;
+                }
+            }
+        }
+
+        return backgroundCount / pointsCount;
     }
     */
 

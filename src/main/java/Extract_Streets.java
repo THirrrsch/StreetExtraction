@@ -47,7 +47,7 @@ public class Extract_Streets implements PlugInFilter {
         dialog.showDialog();
 
         if(!dialog.wasCanceled()) {
-            int filteredImage = (int)dialog.getNextNumber();
+            int sampleRate = (int)dialog.getNextNumber();
             int maxAngleDiff = (int)dialog.getNextNumber();
             int minContourLength = (int)dialog.getNextNumber();
             int colorLookupRadius = (int) dialog.getNextNumber();
@@ -72,7 +72,7 @@ public class Extract_Streets implements PlugInFilter {
             StreetsExtractor extractor;
             if(dialog.getNextChoice().equals("pale")) {
                 ImagePlus cannyImage = IJ.openImage();
-                extractor = new PaleStreetsExtractor(this._image, cannyImage, filteredImage, maxAngleDiff, minContourLength, colorLookupRadius, colorLookupRatio, minHuePale, maxHuePale, minSatPale, maxSatPale, minBrightPale, maxBrightPale, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2, drawCones);
+                extractor = new PaleStreetsExtractor(this._image, cannyImage, sampleRate, maxAngleDiff, minContourLength, colorLookupRadius, colorLookupRatio, minHuePale, maxHuePale, minSatPale, maxSatPale, minBrightPale, maxBrightPale, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2, drawCones);
             } else {
                 extractor = new ColoredStreetsExtractor(this._image, minHueColored, maxHueColored, minSatColored, maxSatColored, minBrightColored, maxBrightColored);
             }

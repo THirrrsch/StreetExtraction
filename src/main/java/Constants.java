@@ -1,6 +1,6 @@
 public interface Constants {
     int SAMPLE_RATE = 5;
-    double MAX_ANGLE_DIFF = 20.0D;
+    double MAX_ANGLE_DIFF = 20;
     int MIN_CONTOUR_LENGTH = 25;
     int COLOR_LOOKUP_RADIUS = 10;
     double COLOR_LOOKUP_RATIO = 0.7;
@@ -13,7 +13,7 @@ public interface Constants {
     int CONTOUR_FOLLOW_SAMPLE_RATE = 20;
     int CONE_ANGLE = 30;
     int CONE_LENGTH = 50;
-    double MAX_ANGLE_DIFF_CONES = 20.0D;
+    double MAX_ANGLE_DIFF_CONES = 20;
     int MIN_HUE_COLORED = 10;
     int MAX_HUE_COLORED = 40;
     int MIN_SATURATION_COLORED = 50;
