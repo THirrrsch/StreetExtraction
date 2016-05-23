@@ -36,7 +36,6 @@ public class Extract_Streets implements PlugInFilter {
         dialog.addNumericField("Cone angle", Constants.CONE_ANGLE, 0);
         dialog.addNumericField("Cone length", Constants.CONE_LENGTH, 0);
         dialog.addNumericField("Max angle diff for following lines", Constants.MAX_ANGLE_DIFF_CONES, 0);
-        dialog.addCheckbox("Draw cones", false);
         dialog.addPanel(new Panel());
         dialog.addNumericField("Min hue colored", Constants.MIN_HUE_COLORED, 0);
         dialog.addNumericField("Max hue colored", Constants.MAX_HUE_COLORED, 0);
@@ -62,7 +61,6 @@ public class Extract_Streets implements PlugInFilter {
             int coneAngle = (int)dialog.getNextNumber();
             int coneLength = (int)dialog.getNextNumber();
             int maxAngleDiff2 = (int)dialog.getNextNumber();
-            boolean drawCones = dialog.getNextBoolean();
             int minHueColored = (int)dialog.getNextNumber();
             int maxHueColored = (int)dialog.getNextNumber();
             int minSatColored = (int)dialog.getNextNumber();
@@ -72,7 +70,7 @@ public class Extract_Streets implements PlugInFilter {
             StreetsExtractor extractor;
             if(dialog.getNextChoice().equals("pale")) {
                 ImagePlus cannyImage = IJ.openImage();
-                extractor = new PaleStreetsExtractor(this._image, cannyImage, sampleRate, maxAngleDiff, minContourLength, colorLookupRadius, colorLookupRatio, minHuePale, maxHuePale, minSatPale, maxSatPale, minBrightPale, maxBrightPale, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2, drawCones);
+                extractor = new PaleStreetsExtractor(this._image, cannyImage, sampleRate, maxAngleDiff, minContourLength, colorLookupRadius, colorLookupRatio, minHuePale, maxHuePale, minSatPale, maxSatPale, minBrightPale, maxBrightPale, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2);
             } else {
                 extractor = new ColoredStreetsExtractor(this._image, minHueColored, maxHueColored, minSatColored, maxSatColored, minBrightColored, maxBrightColored);
             }
