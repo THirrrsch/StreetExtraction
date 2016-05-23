@@ -1,7 +1,12 @@
 public interface Constants {
     int SAMPLE_RATE = 5;
-    double MAX_ANGLE_DIFF = 20;
+    int MAX_ANGLE_DIFF = 20;
+
     int MIN_CONTOUR_LENGTH = 25;
+
+    int DBSCAN_EPSILON = 4;
+    int DBSCAN_MINPTS = 20;
+
     int COLOR_LOOKUP_RADIUS = 10;
     double COLOR_LOOKUP_RATIO = 0.7;
     int MIN_HUE_PALE = 15;
@@ -10,14 +15,17 @@ public interface Constants {
     int MAX_SATURATION_PALE = 100;
     int MIN_BRIGHTNESS_PALE = 125;
     int MAX_BRIGHTNESS_PALE = 255;
+
     int CONTOUR_FOLLOW_SAMPLE_RATE = 20;
     int CONE_ANGLE = 30;
     int CONE_LENGTH = 50;
-    double MAX_ANGLE_DIFF_CONES = 20;
+    int MAX_ANGLE_DIFF_CONES = 20;
+
     int MIN_HUE_COLORED = 10;
     int MAX_HUE_COLORED = 40;
     int MIN_SATURATION_COLORED = 50;
     int MAX_SATURATION_COLORED = 255;
     int MIN_BRIGHTNESS_COLORED = 0;
     int MAX_BRIGHTNESS_COLORED = 255;
+
 }

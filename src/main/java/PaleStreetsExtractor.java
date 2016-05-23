@@ -2,64 +2,43 @@ import blob.Blob;
 import blob.ManyBlobs;
 import ij.ImagePlus;
 import ij.gui.NewImage;
-import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import org.apache.commons.math3.ml.clustering.Cluster;
+import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
 import java.awt.*;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PaleStreetsExtractor implements StreetsExtractor {
-    private ImagePlus _originalImage;
     private final ManyBlobs _allBlobs;
     private final int _width;
     private final int _height;
     private final int _sampleRate;
     private final int _maxAngleDiff;
     private final int _minContourLength;
-    private final int _colorLookupRadius;
-    private final double _colorLookupRatio;
-    private final byte[] _hue;
-    private final byte[] _saturation;
-    private final byte[] _brightness;
-    private final int _minHue;
-    private final int _maxHue;
-    private final int _minSat;
-    private final int _maxSat;
-    private final int _minBright;
-    private final int _maxBright;
+    private final int _epsilon;
+    private final int _minPts;
     private final int _lineFollowingSampleRate;
     private final int _coneAngle;
     private final int _coneLength;
     private final int _maxAngleDiffCone;
 
-    public PaleStreetsExtractor(ImagePlus originalImage, ImagePlus cannyImage, int sampleRate, int maxAngleDiff, int minContourLength, int colorLookupRadius, double colorLookupRatio, int minHue, int maxHue, int minSat, int maxSat, int minBright, int maxBright, int lineFollowingSampleRate, int coneAngle, int coneLength, int maxAngleDiffCone) {
-        _originalImage = originalImage;
+    public PaleStreetsExtractor(ImagePlus cannyImage, int sampleRate, int maxAngleDiff, int minContourLength, int epsilon, int minPts, int lineFollowingSampleRate, int coneAngle, int coneLength, int maxAngleDiffCone) {
         _sampleRate = sampleRate;
         _maxAngleDiff = maxAngleDiff;
         _minContourLength = minContourLength;
-        _colorLookupRadius = colorLookupRadius;
-        _colorLookupRatio = colorLookupRatio;
-        _minHue = minHue;
-        _maxHue = maxHue;
-        _minSat = minSat;
-        _maxSat = maxSat;
-        _minBright = minBright;
-        _maxBright = maxBright;
+        _epsilon = epsilon;
+        _minPts = minPts;
         _lineFollowingSampleRate = lineFollowingSampleRate;
         _coneAngle = coneAngle;
         _coneLength = coneLength;
         _maxAngleDiffCone = maxAngleDiffCone;
 
-        _width = _originalImage.getWidth();
-        _height = _originalImage.getHeight();
-
-        ColorProcessor colorProcessor = new ColorProcessor(_originalImage.getImage());
-        _hue = new byte[_width * _height];
-        _saturation = new byte[_width * _height];
-        _brightness = new byte[_width * _height];
-        colorProcessor.getHSB(_hue, _saturation, _brightness);
+        _width = cannyImage.getWidth();
+        _height = cannyImage.getHeight();
 
         _allBlobs = new ManyBlobs(cannyImage);
         _allBlobs.findConnectedComponents();
@@ -68,41 +47,11 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     public ImagePlus process() {
         ManyBlobs straighLineBlobs = this.getStraightLineBlobs(_allBlobs);
         ManyBlobs longBlobs = this.getLongBlobs(straighLineBlobs);
+
+        //this.printBlobsToCSV(longBlobs);
+
         ManyBlobs clusterFilteredBlobs = this.getClusterFilteredBlobs(longBlobs);
         return this.getStreetImageByFollowingLines(clusterFilteredBlobs);
-
-        //ManyBlobs coloredBlobs = this.getColoredBlobs(longBlobs);
-        //return this.getStreetImageByFollowingLines(coloredBlobs);
-
-        //ManyBlobs coneBlobesConnected = this.getConeFollowingBlobs(longBlobs);
-        //ManyBlobs coneBlobsDisconnected = this.getStraightLineBlobs(coneBlobesConnected);
-        //return this.getColoredNeighborhoodImage(coneBlobsDisconnected);
-    }
-
-    private void printBlobsToCSV(ManyBlobs blobs) {
-        try
-        {
-            FileWriter writer = new FileWriter("C:\\Users\\Hirsch\\Desktop\\test.csv");
-
-            for (Blob blob : blobs) {
-                int end = blob.getOuterContour().npoints / 2;
-                int[] contourX = blob.getLineX();
-                int[] contourY = blob.getLineY();
-                double angle = this.getAngle180Positive(contourX[0], contourX[end], contourY[0], contourY[end]);
-
-                writer.append(String.valueOf(end));
-                writer.append(' ');
-                writer.append(String.valueOf(angle));
-                writer.append('\n');
-            }
-
-            writer.flush();
-            writer.close();
-        }
-        catch(IOException e)
-        {
-            e.printStackTrace();
-        }
     }
 
     private ManyBlobs getStraightLineBlobs(ManyBlobs inputBlobs) {
@@ -165,6 +114,156 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         longLineImage.updateAndDraw();
         result.createLineOrdering();
         return result;
+    }
+
+    private ManyBlobs getClusterFilteredBlobs(ManyBlobs longBlobs) {
+        ManyBlobs result = new ManyBlobs();
+        ImagePlus clusteredImage = NewImage.createByteImage("clustered image", _width, _height, 1, 4);
+        ImageProcessor clusteredProcessor = clusteredImage.getProcessor();
+
+        List<BlobWrapper> clusterInput = new ArrayList<BlobWrapper>(longBlobs.size());
+        for (Blob blob : longBlobs) {
+            clusterInput.add(new BlobWrapper(blob));
+        }
+
+        DBSCANClusterer<BlobWrapper> clusterer = new DBSCANClusterer<BlobWrapper>(_epsilon, _minPts);
+        List<Cluster<BlobWrapper>> clusterResults = clusterer.cluster(clusterInput);
+
+        for (Cluster<BlobWrapper> cluster : clusterResults) {
+            for (BlobWrapper wrapper : cluster.getPoints()) {
+                clusterInput.remove(wrapper);
+            }
+        }
+
+        for (BlobWrapper resultWrapper : clusterInput) {
+            Blob resultBlob = resultWrapper.getBlob();
+            result.add(resultBlob);
+            resultBlob.draw(clusteredProcessor);
+        }
+
+        clusteredImage.show();
+        clusteredImage.updateAndDraw();
+        return result;
+    }
+
+    private ImagePlus getStreetImageByFollowingLines(ManyBlobs longBlobs) {
+        ImagePlus streetImage = NewImage.createByteImage("street image", _width, _height, 1, 4);
+        ImageProcessor streetImageProcessor = streetImage.getProcessor();
+
+        for (Blob blob : longBlobs) {
+            int[] contourX = blob.getLineX();
+            int[] contourY = blob.getLineY();
+            int end = blob.getOuterContour().npoints / 2;
+            boolean firstPart = true;
+
+            for (int i = 0; i < 2; ++i) {
+                int x1 = firstPart ? contourX[_lineFollowingSampleRate] : contourX[end - _lineFollowingSampleRate];
+                int y1 = firstPart ? contourY[_lineFollowingSampleRate] : contourY[end - _lineFollowingSampleRate];
+                int startX = firstPart ? contourX[0] : contourX[end];
+                int startY = firstPart ? contourY[0] : contourY[end];
+                double baseAngle = this.getAngle(x1, startX, y1, startY);
+                int offset = 0;
+
+                while (offset < _coneAngle) {
+                    double currentAngle = baseAngle + (double) offset;
+                    double currentAngleRAD = Math.PI * currentAngle / 180;
+                    int endX = (int) ((double) startX + (double) _coneLength * Math.cos(currentAngleRAD));
+                    int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
+                    List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
+
+                    if (this.couldFollow(points, longBlobs, baseAngle, streetImageProcessor)) {
+                        blob.draw(streetImageProcessor);
+                        break;
+                    }
+
+                    if (offset == 0) {
+                        offset = -1;
+                    } else if (offset < 0) {
+                        offset *= -1;
+                    } else {
+                        ++offset;
+                        offset *= -1;
+                    }
+                }
+
+                firstPart = !firstPart;
+            }
+        }
+
+        streetImage.updateImage();
+        return streetImage;
+    }
+
+
+    private boolean couldFollow(List<Point> points, ManyBlobs longBlobs, double baseAngle, ImageProcessor streetImageProcessor) {
+        for (Blob blob : longBlobs) {
+            int[] contourX = blob.getLineX();
+            int[] contourY = blob.getLineY();
+            int end = blob.getOuterContour().npoints / 2;
+
+            for (Point p : points) {
+                double angle;
+                if (contourX[0] == p.x && contourY[0] == p.y) {
+                    angle = this.getAngle(contourX[0], contourX[_lineFollowingSampleRate], contourY[0], contourY[_lineFollowingSampleRate]);
+                    if (this.getAngleDiff(baseAngle, angle) < (double) _maxAngleDiffCone) {
+                        streetImageProcessor.drawLine(points.get(0).x, points.get(0).y, p.x, p.y);
+                        return true;
+                    }
+                }
+
+                if (contourX[end] == p.x && contourY[end] == p.y) {
+                    angle = this.getAngle(contourX[end], contourX[end - _lineFollowingSampleRate], contourY[end], contourY[end - _lineFollowingSampleRate]);
+                    if (this.getAngleDiff(baseAngle, angle) < (double) _maxAngleDiffCone) {
+                        streetImageProcessor.drawLine(points.get(0).x, points.get(0).y, p.x, p.y);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private double getAngle(int startX, int endX, int startY, int endY) {
+        double angleRAD = Math.atan2((double)(endY - startY), (double)(endX - startX));
+        return angleRAD * 180 / Math.PI;
+    }
+
+    private double getAngle180Positive(int startX, int endX, int startY, int endY) {
+        double angleRAD = Math.atan2((double)(endY - startY), (double)(endX - startX));
+        double angleDegree = angleRAD * 180 / Math.PI;
+        return angleDegree > 0 ? angleDegree : 180 + angleDegree;
+    }
+
+    private double getAngleDiff(double alpha, double beta) {
+        double diff = Math.abs(beta - alpha) % 360;
+        return diff < 180 ? diff : 360 - diff;
+    }
+
+    private void printBlobsToCSV(ManyBlobs blobs) {
+        try
+        {
+            FileWriter writer = new FileWriter("C:\\Users\\Hirsch\\Desktop\\test.csv");
+
+            for (Blob blob : blobs) {
+                int end = blob.getOuterContour().npoints / 2;
+                int[] contourX = blob.getLineX();
+                int[] contourY = blob.getLineY();
+                double angle = this.getAngle180Positive(contourX[0], contourX[end], contourY[0], contourY[end]);
+
+                writer.append(String.valueOf(end));
+                writer.append(' ');
+                writer.append(String.valueOf(angle));
+                writer.append('\n');
+            }
+
+            writer.flush();
+            writer.close();
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     /*
@@ -344,55 +443,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     }
     */
 
-    private ImagePlus getStreetImageByFollowingLines(ManyBlobs longBlobs) {
-        ImagePlus streetImage = NewImage.createByteImage("street image", _width, _height, 1, 4);
-        ImageProcessor streetImageProcessor = streetImage.getProcessor();
-
-        for (Blob blob : longBlobs) {
-            int[] contourX = blob.getLineX();
-            int[] contourY = blob.getLineY();
-            int end = blob.getOuterContour().npoints / 2;
-            boolean firstPart = true;
-
-            for (int i = 0; i < 2; ++i) {
-                int x1 = firstPart ? contourX[_lineFollowingSampleRate] : contourX[end - _lineFollowingSampleRate];
-                int y1 = firstPart ? contourY[_lineFollowingSampleRate] : contourY[end - _lineFollowingSampleRate];
-                int startX = firstPart ? contourX[0] : contourX[end];
-                int startY = firstPart ? contourY[0] : contourY[end];
-                double baseAngle = this.getAngle(x1, startX, y1, startY);
-                int offset = 0;
-
-                while (offset < _coneAngle) {
-                    double currentAngle = baseAngle + (double) offset;
-                    double currentAngleRAD = Math.PI * currentAngle / 180;
-                    int endX = (int) ((double) startX + (double) _coneLength * Math.cos(currentAngleRAD));
-                    int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
-                    List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
-
-                    if (this.couldFollow(points, longBlobs, baseAngle, streetImageProcessor)) {
-                        blob.draw(streetImageProcessor);
-                        break;
-                    }
-
-                    if (offset == 0) {
-                        offset = -1;
-                    } else if (offset < 0) {
-                        offset *= -1;
-                    } else {
-                        ++offset;
-                        offset *= -1;
-                    }
-                }
-
-                firstPart = !firstPart;
-            }
-        }
-
-        streetImage.updateImage();
-        return streetImage;
-    }
-
-    /*
+        /*
     private double getBackgroundRatio(List<Point> points) {
         double pointsCount = 0;
         double backgroundCount = 0;
@@ -414,51 +465,6 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         return backgroundCount / pointsCount;
     }
     */
-
-    private boolean couldFollow(List<Point> points, ManyBlobs longBlobs, double baseAngle, ImageProcessor streetImageProcessor) {
-        for (Blob blob : longBlobs) {
-            int[] contourX = blob.getLineX();
-            int[] contourY = blob.getLineY();
-            int end = blob.getOuterContour().npoints / 2;
-
-            for (Point p : points) {
-                double angle;
-                if (contourX[0] == p.x && contourY[0] == p.y) {
-                    angle = this.getAngle(contourX[0], contourX[_lineFollowingSampleRate], contourY[0], contourY[_lineFollowingSampleRate]);
-                    if (this.getAngleDiff(baseAngle, angle) < (double) _maxAngleDiffCone) {
-                        streetImageProcessor.drawLine(points.get(0).x, points.get(0).y, p.x, p.y);
-                        return true;
-                    }
-                }
-
-                if (contourX[end] == p.x && contourY[end] == p.y) {
-                    angle = this.getAngle(contourX[end], contourX[end - _lineFollowingSampleRate], contourY[end], contourY[end - _lineFollowingSampleRate]);
-                    if (this.getAngleDiff(baseAngle, angle) < (double) _maxAngleDiffCone) {
-                        streetImageProcessor.drawLine(points.get(0).x, points.get(0).y, p.x, p.y);
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private double getAngle(int startX, int endX, int startY, int endY) {
-        double angleRAD = Math.atan2((double)(endY - startY), (double)(endX - startX));
-        return angleRAD * 180 / Math.PI;
-    }
-
-    private double getAngle180Positive(int startX, int endX, int startY, int endY) {
-        double angleRAD = Math.atan2((double)(endY - startY), (double)(endX - startX));
-        double angleDegree = angleRAD * 180 / Math.PI;
-        return angleDegree > 0 ? angleDegree : 180 + angleDegree;
-    }
-
-    private double getAngleDiff(double alpha, double beta) {
-        double diff = Math.abs(beta - alpha) % 360;
-        return diff < 180 ? diff : 360 - diff;
-    }
 
     private boolean isInImageRange(int x, int y) {
         return x > -1 && x < _width && y > -1 && y < _height;

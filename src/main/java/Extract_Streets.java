@@ -24,14 +24,8 @@ public class Extract_Streets implements PlugInFilter {
         dialog.addNumericField("Sample rate", Constants.SAMPLE_RATE, 0);
         dialog.addNumericField("Max angle diff for straight lines", Constants.MAX_ANGLE_DIFF, 0);
         dialog.addNumericField("Min contour length", Constants.MIN_CONTOUR_LENGTH, 0);
-        dialog.addNumericField("Color lookup radius", Constants.COLOR_LOOKUP_RADIUS, 0);
-        dialog.addNumericField("Color lookup ratio", Constants.COLOR_LOOKUP_RATIO, 1);
-        dialog.addNumericField("Min hue pale", Constants.MIN_HUE_PALE, 0);
-        dialog.addNumericField("Max hue pale", Constants.MAX_HUE_PALE, 0);
-        dialog.addNumericField("Min saturation pale", Constants.MIN_SATURATION_PALE, 0);
-        dialog.addNumericField("Max saturation pale", Constants.MAX_SATURATION_PALE, 0);
-        dialog.addNumericField("Min brightness pale", Constants.MIN_BRIGHTNESS_PALE, 0);
-        dialog.addNumericField("Max brightness pale", Constants.MAX_BRIGHTNESS_PALE, 0);
+        dialog.addNumericField("DBSCAN epsilon", Constants.DBSCAN_EPSILON, 0);
+        dialog.addNumericField("DBSCAN minPts", Constants.DBSCAN_MINPTS, 0);
         dialog.addNumericField("Line following sample rate", Constants.CONTOUR_FOLLOW_SAMPLE_RATE, 0);
         dialog.addNumericField("Cone angle", Constants.CONE_ANGLE, 0);
         dialog.addNumericField("Cone length", Constants.CONE_LENGTH, 0);
@@ -49,14 +43,8 @@ public class Extract_Streets implements PlugInFilter {
             int sampleRate = (int)dialog.getNextNumber();
             int maxAngleDiff = (int)dialog.getNextNumber();
             int minContourLength = (int)dialog.getNextNumber();
-            int colorLookupRadius = (int) dialog.getNextNumber();
-            double colorLookupRatio = dialog.getNextNumber();
-            int minHuePale = (int)dialog.getNextNumber();
-            int maxHuePale = (int)dialog.getNextNumber();
-            int minSatPale = (int)dialog.getNextNumber();
-            int maxSatPale = (int)dialog.getNextNumber();
-            int minBrightPale = (int)dialog.getNextNumber();
-            int maxBrightPale = (int)dialog.getNextNumber();
+            int dbscanEpsilon = (int) dialog.getNextNumber();
+            int dbscanMinPts = (int) dialog.getNextNumber();
             int lineFollowingSampleRate = (int)dialog.getNextNumber();
             int coneAngle = (int)dialog.getNextNumber();
             int coneLength = (int)dialog.getNextNumber();
@@ -69,8 +57,8 @@ public class Extract_Streets implements PlugInFilter {
             int maxBrightColored = (int)dialog.getNextNumber();
             StreetsExtractor extractor;
             if(dialog.getNextChoice().equals("pale")) {
-                ImagePlus cannyImage = IJ.openImage();
-                extractor = new PaleStreetsExtractor(this._image, cannyImage, sampleRate, maxAngleDiff, minContourLength, colorLookupRadius, colorLookupRatio, minHuePale, maxHuePale, minSatPale, maxSatPale, minBrightPale, maxBrightPale, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2);
+                //ImagePlus cannyImage = IJ.openImage();
+                extractor = new PaleStreetsExtractor(this._image, sampleRate, maxAngleDiff, minContourLength, dbscanEpsilon, dbscanMinPts, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2);
             } else {
                 extractor = new ColoredStreetsExtractor(this._image, minHueColored, maxHueColored, minSatColored, maxSatColored, minBrightColored, maxBrightColored);
             }
@@ -88,7 +76,7 @@ public class Extract_Streets implements PlugInFilter {
         String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
         System.setProperty("plugins.dir", pluginsDir);
         new ImageJ();
-        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\input\\manyStreets.png");
+        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\wood2.png");
         image.show();
         IJ.runPlugIn(clazz.getName(), "");
     }
