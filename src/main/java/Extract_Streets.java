@@ -37,6 +37,7 @@ public class Extract_Streets implements PlugInFilter {
         dialog.addNumericField("Max saturation colored", Constants.MAX_SATURATION_COLORED, 0);
         dialog.addNumericField("Min brightness colored", Constants.MIN_BRIGHTNESS_COLORED, 0);
         dialog.addNumericField("Max brightness colored", Constants.MAX_BRIGHTNESS_COLORED, 0);
+        dialog.addNumericField("Street Width", Constants.STREET_WIDTH, 0);
         dialog.showDialog();
 
         if(!dialog.wasCanceled()) {
@@ -55,12 +56,13 @@ public class Extract_Streets implements PlugInFilter {
             int maxSatColored = (int)dialog.getNextNumber();
             int minBrightColored = (int)dialog.getNextNumber();
             int maxBrightColored = (int)dialog.getNextNumber();
+            int streetWidth = (int)dialog.getNextNumber();
             StreetsExtractor extractor;
             if(dialog.getNextChoice().equals("pale")) {
                 //ImagePlus cannyImage = IJ.openImage();
-                extractor = new PaleStreetsExtractor(this._image, sampleRate, maxAngleDiff, minContourLength, dbscanEpsilon, dbscanMinPts, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2);
+                extractor = new PaleStreetsExtractor(_image, sampleRate, maxAngleDiff, minContourLength, dbscanEpsilon, dbscanMinPts, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2);
             } else {
-                extractor = new ColoredStreetsExtractor(this._image, minHueColored, maxHueColored, minSatColored, maxSatColored, minBrightColored, maxBrightColored);
+                extractor = new ColoredStreetsExtractor(_image, minHueColored, maxHueColored, minSatColored, maxSatColored, minBrightColored, maxBrightColored, streetWidth);
             }
 
             ImagePlus filteredImage1 = extractor.process();
@@ -76,7 +78,7 @@ public class Extract_Streets implements PlugInFilter {
         String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
         System.setProperty("plugins.dir", pluginsDir);
         new ImageJ();
-        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\wood2.png");
+        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
         image.show();
         IJ.runPlugIn(clazz.getName(), "");
     }

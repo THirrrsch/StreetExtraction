@@ -26,6 +26,8 @@ public class PaleStreetsExtractor implements StreetsExtractor {
     private final int _coneLength;
     private final int _maxAngleDiffCone;
 
+    ImagePlus _clusteredImage;
+
     public PaleStreetsExtractor(ImagePlus cannyImage, int sampleRate, int maxAngleDiff, int minContourLength, int epsilon, int minPts, int lineFollowingSampleRate, int coneAngle, int coneLength, int maxAngleDiffCone) {
         _sampleRate = sampleRate;
         _maxAngleDiff = maxAngleDiff;
@@ -36,7 +38,6 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         _coneAngle = coneAngle;
         _coneLength = coneLength;
         _maxAngleDiffCone = maxAngleDiffCone;
-
         _width = cannyImage.getWidth();
         _height = cannyImage.getHeight();
 
@@ -118,8 +119,8 @@ public class PaleStreetsExtractor implements StreetsExtractor {
 
     private ManyBlobs getClusterFilteredBlobs(ManyBlobs longBlobs) {
         ManyBlobs result = new ManyBlobs();
-        ImagePlus clusteredImage = NewImage.createByteImage("clustered image", _width, _height, 1, 4);
-        ImageProcessor clusteredProcessor = clusteredImage.getProcessor();
+        _clusteredImage = NewImage.createByteImage("clustered image", _width, _height, 1, 4);
+        ImageProcessor clusteredProcessor = _clusteredImage.getProcessor();
 
         List<BlobWrapper> clusterInput = new ArrayList<BlobWrapper>(longBlobs.size());
         for (Blob blob : longBlobs) {
@@ -141,16 +142,17 @@ public class PaleStreetsExtractor implements StreetsExtractor {
             resultBlob.draw(clusteredProcessor);
         }
 
-        clusteredImage.show();
-        clusteredImage.updateAndDraw();
+        _clusteredImage.show();
+        _clusteredImage.updateAndDraw();
         return result;
     }
 
-    private ImagePlus getStreetImageByFollowingLines(ManyBlobs longBlobs) {
+    private ImagePlus getStreetImageByFollowingLines(ManyBlobs inputBlobs) {
         ImagePlus streetImage = NewImage.createByteImage("street image", _width, _height, 1, 4);
         ImageProcessor streetImageProcessor = streetImage.getProcessor();
+        byte[] clusteredPixels = (byte[]) _clusteredImage.getProcessor().getPixels();
 
-        for (Blob blob : longBlobs) {
+        for (Blob blob : inputBlobs) {
             int[] contourX = blob.getLineX();
             int[] contourY = blob.getLineY();
             int end = blob.getOuterContour().npoints / 2;
@@ -171,7 +173,13 @@ public class PaleStreetsExtractor implements StreetsExtractor {
                     int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
                     List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
 
-                    if (this.couldFollow(points, longBlobs, baseAngle, streetImageProcessor)) {
+//                    for (Point p : points) {
+//                        if (this.isInImageRange(p.x, p.y) && clusteredPixels[p.y * _width + p.x] != 0) {
+//                            clusteredPixels[p.y * _width + p.x] = -56;
+//                        }
+//                    }
+
+                    if (this.couldFollow(points, inputBlobs, baseAngle, streetImageProcessor)) {
                         blob.draw(streetImageProcessor);
                         break;
                     }
@@ -193,7 +201,6 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         streetImage.updateImage();
         return streetImage;
     }
-
 
     private boolean couldFollow(List<Point> points, ManyBlobs longBlobs, double baseAngle, ImageProcessor streetImageProcessor) {
         for (Blob blob : longBlobs) {

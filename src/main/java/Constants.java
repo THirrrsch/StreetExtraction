@@ -28,4 +28,5 @@ public interface Constants {
     int MIN_BRIGHTNESS_COLORED = 0;
     int MAX_BRIGHTNESS_COLORED = 255;
 
+    int STREET_WIDTH = 20;
 }
