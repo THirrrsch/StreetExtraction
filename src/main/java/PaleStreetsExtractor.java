@@ -9,10 +9,8 @@ import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import java.awt.*;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class PaleStreetsExtractor implements StreetsExtractor {
     private final ManyBlobs _allBlobs;
@@ -181,8 +179,10 @@ public class PaleStreetsExtractor implements StreetsExtractor {
             lines.add(new Line(blob));
         }
 
+        LineMapper mapper = new LineMapper(lines);
+
         for (Blob blob : inputBlobs) {
-            List<Line> parallelLines = this.findParallelLines(blob, lines);
+            List<Line> parallelLines = this.findParallelLines(blob, mapper);
 
             if (parallelLines.size() > 0) {
                 blob.draw(parallelProcessor);
@@ -196,7 +196,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         return parallelImage;
     }
 
-    private List<Line> findParallelLines(Blob blob, List<Line> lines) {
+    private List<Line> findParallelLines(Blob blob, LineMapper mapper) {
         byte[] pixels = (byte[]) combinedImage.getProcessor().getPixels();
 
         List<Line> result = new ArrayList<Line>();
@@ -230,19 +230,12 @@ public class PaleStreetsExtractor implements StreetsExtractor {
 //                }
 //            }
 
-            for (Line line : lines) {
-                if (!result.contains(line) && line.containsAny(pointsClock)) {
-                    if (Utils.getAngleDiff(line.getAngle(), currentLine.getAngle()) < _maxAngleDiff) {
-                        result.add(line);
-                    }
-                }
-            }
+            Set<Line> intersectedLines = mapper.getIntersectedLines(pointsClock);
+            intersectedLines.addAll(mapper.getIntersectedLines(pointsCounterclock));
 
-            for (Line line : lines) {
-                if (!result.contains(line) && line.containsAny(pointsCounterclock)) {
-                    if (Utils.getAngleDiff(line.getAngle(), currentLine.getAngle()) < _maxAngleDiff) {
-                        result.add(line);
-                    }
+            for (Line line : intersectedLines) {
+                if (Utils.getAngleDiff(line.getAngle(), currentLine.getAngle()) < _maxAngleDiff) {
+                    result.add(line);
                 }
             }
         }
