@@ -1,3 +1,6 @@
+package blob;
+
+import Util.Utils;
 import blob.Blob;
 import ij.process.ImageProcessor;
 

@@ -1,3 +1,7 @@
+package Util;
+
+import blob.Line;
+
 import java.awt.*;
 import java.util.*;
 import java.util.List;

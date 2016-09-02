@@ -1,3 +1,5 @@
+package blob;
+
 import blob.Blob;
 import org.apache.commons.math3.ml.clustering.Clusterable;
 

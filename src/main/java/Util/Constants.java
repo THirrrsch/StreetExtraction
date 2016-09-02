@@ -1,3 +1,5 @@
+package Util;
+
 public interface Constants {
     int SAMPLE_RATE = 5;
     int MAX_ANGLE_DIFF = 20;

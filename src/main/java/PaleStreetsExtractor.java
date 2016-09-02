@@ -1,4 +1,9 @@
+import Util.BlobMapper;
+import Util.LineMapper;
+import Util.Utils;
 import blob.Blob;
+import blob.BlobWrapper;
+import blob.Line;
 import blob.ManyBlobs;
 import ij.ImagePlus;
 import ij.gui.NewImage;
@@ -73,9 +78,9 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         //this.printBlobsToCSV(longBlobs);
 
         ManyBlobs clusterFilteredBlobs = this.getClusterFilteredBlobs(longBlobs);
-        ImagePlus parallelImage = getParallelBlobs(clusterFilteredBlobs);
-        return parallelImage;
-        //return this.getStreetImageByFollowingLines(clusterFilteredBlobs);
+        //ImagePlus parallelImage = getParallelBlobs(clusterFilteredBlobs);
+        //return parallelImage;
+        return this.getStreetImageByFollowingLines(clusterFilteredBlobs);
     }
 
     private ManyBlobs getStraightLineBlobs(ManyBlobs inputBlobs) {
@@ -380,6 +385,8 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         ImagePlus streetImage = NewImage.createByteImage("street image", _width, _height, 1, 4);
         ImageProcessor streetImageProcessor = streetImage.getProcessor();
 
+        BlobMapper mapper = new BlobMapper(inputBlobs);
+
         for (Blob blob : inputBlobs) {
             int[] contourX = blob.getLineX();
             int[] contourY = blob.getLineY();
@@ -401,7 +408,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
                     int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
                     List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
 
-                    if (this.couldFollow(points, inputBlobs, baseAngle, streetImageProcessor)) {
+                    if (this.couldFollow(points, mapper, baseAngle, streetImageProcessor, inputBlobs)) {
                         blob.draw(streetImageProcessor);
                         break;
                     }
@@ -417,24 +424,16 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         return streetImage;
     }
 
-    private boolean couldFollow(List<Point> points, ManyBlobs inputBlobs, double baseAngle, ImageProcessor streetImageProcessor) {
-        for (Blob blob : inputBlobs) {
-            int[] contourX = blob.getLineX();
-            int[] contourY = blob.getLineY();
-            int end = blob.getOuterContour().npoints / 2;
-
-            for (Point p : points) {
-                double angle;
-                if (contourX[0] == p.x && contourY[0] == p.y) {
-                    angle = Utils.getAngle(contourX[0], contourX[_lineFollowingSampleRate], contourY[0], contourY[_lineFollowingSampleRate]);
-                    if (Utils.getAngleDiff(baseAngle, angle) < (double) _maxAngleDiffCone) {
-                        streetImageProcessor.drawLine(points.get(0).x, points.get(0).y, p.x, p.y);
-                        return true;
-                    }
-                }
-
-                if (contourX[end] == p.x && contourY[end] == p.y) {
-                    angle = Utils.getAngle(contourX[end], contourX[end - _lineFollowingSampleRate], contourY[end], contourY[end - _lineFollowingSampleRate]);
+    private boolean couldFollow(List<Point> points, BlobMapper mapper, double baseAngle, ImageProcessor streetImageProcessor, List<Blob> inputBlobs) {
+        for (Point p : points) {
+            for (int i = 0; i < 2; i++) {
+                Blob candidate = (i == 0) ? mapper.getBlobWithGivenFirstPoint(p) : mapper.getBlobWithGivenLastPoint(p);
+                if (candidate != null) {
+                    int[] contourX = candidate.getLineX();
+                    int[] contourY = candidate.getLineY();
+                    int end = candidate.getOuterContour().npoints / 2;
+                    double angle = (i == 0) ? Utils.getAngle(contourX[0], contourX[_lineFollowingSampleRate], contourY[0], contourY[_lineFollowingSampleRate])
+                                     : Utils.getAngle(contourX[end], contourX[end - _lineFollowingSampleRate], contourY[end], contourY[end - _lineFollowingSampleRate]);
                     if (Utils.getAngleDiff(baseAngle, angle) < (double) _maxAngleDiffCone) {
                         streetImageProcessor.drawLine(points.get(0).x, points.get(0).y, p.x, p.y);
                         return true;
@@ -512,7 +511,7 @@ public class PaleStreetsExtractor implements StreetsExtractor {
                     double currentAngleRAD = Math.PI * currentAngle / 180;
                     int endX = (int) ((double) startX + (double) _coneLength * Math.cos(currentAngleRAD));
                     int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
-                    List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
+                    List<Point> points = Util.Utils.getBresenhamPoints(startX, startY, endX, endY);
 
                     if (this.couldFollow(points, longBlobs, baseAngle, coneFollowingProcessor)) {
                         blob.draw(coneFollowingProcessor);
