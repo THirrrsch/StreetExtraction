@@ -16,9 +16,15 @@ public interface Constants {
     int MIN_BRIGHTNESS_PALE = 125;
     int MAX_BRIGHTNESS_PALE = 255;
 
+    int DOTTED_LINE_BLOB_SIZE = 50;
+    int DOTTED_LINE_CONE_ANGLE = 10;
+    int DOTTED_LINE_CONE_LENGTH = 60;
+    int MIN_STREET_WIDTH = 5;
+    int MAX_STREET_WIDTH = 20;
+
     int CONTOUR_FOLLOW_SAMPLE_RATE = 20;
     int CONE_ANGLE = 30;
-    int CONE_LENGTH = 50;
+    int CONE_LENGTH = 70;
     int MAX_ANGLE_DIFF_CONES = 20;
 
     int MIN_HUE_COLORED = 10;

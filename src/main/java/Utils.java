@@ -1,4 +1,8 @@
+import blob.Blob;
+import ij.process.ImageProcessor;
+
 import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +73,31 @@ public class Utils {
             fourConnectedResult.add(next);
         }
 
+        if (fourConnectedResult.size() > 0) {
+            if (fourConnectedResult.get(0).x == x1 && fourConnectedResult.get(0).y == y1) {
+                fourConnectedResult.remove(0);
+            }
+        }
+
         return fourConnectedResult;
+    }
+
+    public static void drawCentroidLine(List<Blob> currentLineBlobs, ImageProcessor processor) {
+        for (int i = 0; i < currentLineBlobs.size() - 1; i++) {
+            Point start = currentLineBlobs.get(i).getCentroid();
+            Point end = currentLineBlobs.get(i + 1).getCentroid();
+            processor.drawLine(start.x, start.y, end.x, end.y);
+        }
+    }
+
+    // 0 - 360
+    public static double getAngle(int startX, int endX, int startY, int endY) {
+        double angleRAD = Math.atan2((double)(endY - startY), (double)(endX - startX));
+        return angleRAD * 180 / Math.PI;
+    }
+
+    public static double getAngleDiff(double alpha, double beta) {
+        double diff = Math.abs(beta - alpha) % 360;
+        return diff < 180 ? diff : 360 - diff;
     }
 }

@@ -47,6 +47,7 @@ public class Blob {
 	
 	//Features
 	private Point2D  centerOfGrafity = null;
+	private Point centroid = null;
 	private double enclosedArea = -1;
 
 	private Calibration cal = new Calibration();
@@ -164,6 +165,26 @@ public class Blob {
 		return centerOfGrafity;
 	}
 
+	public Point getCentroid() {
+
+		if (centroid != null) {
+			return centroid;
+		}
+
+		int[] x = outerContour.xpoints;
+		int[] y = outerContour.ypoints;
+		double sumx = 0;
+		double sumy = 0;
+
+		for (int i = 0; i < outerContour.npoints - 1; i++) {
+			sumx += x[i];
+			sumy += y[i];
+		}
+
+		centroid = new Point((int) (sumx / (outerContour.npoints - 1)), (int) (sumy / (outerContour.npoints - 1)));
+		return centroid;
+	}
+
 	private void fillPolygon(ImageProcessor ip, Polygon p, boolean internContour) {
 		PolygonRoi proi = new PolygonRoi(p, PolygonRoi.POLYGON);
 		Rectangle r = proi.getBounds();
@@ -213,6 +234,10 @@ public class Blob {
 		enclosedArea = imp.getStatistics().histogram[0]*cal.pixelHeight*cal.pixelWidth;
 		
 		return enclosedArea;
+	}
+
+	public int getNumberofHoles() {
+		return innerContours.size();
 	}
 	
 	public static ImagePlus generateBlobImage(Blob b){
@@ -270,5 +295,25 @@ public class Blob {
 		System.arraycopy(array, shift, array, 0, array.length - shift);
 		System.arraycopy(array2, shift + array.length - shift - array.length, array, array.length - shift, array.length - (array.length - shift));
 		return array;
+	}
+
+	public boolean contourContains(Point point) {
+		int[] contourX = outerContour.xpoints;
+		int[] contourY = outerContour.ypoints;
+
+		for (int i = 0; i < outerContour.npoints; i++) {
+			if (contourX[i] == point.x && contourY[i] == point.y) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public void drawCentroid(ImageProcessor processor) {
+		processor.drawLine(centroid.x - 2, centroid.y, centroid.x + 2, centroid.y);
+		processor.drawLine(centroid.x, centroid.y - 2, centroid.x, centroid.y + 2);
+		processor.drawLine(centroid.x - 2, centroid.y, centroid.x + 2, centroid.y);
+		processor.drawLine(centroid.x, centroid.y - 2, centroid.x, centroid.y + 2);
 	}
 }

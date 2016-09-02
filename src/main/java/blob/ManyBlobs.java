@@ -19,10 +19,13 @@ TABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 
 package blob;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.process.ImageStatistics;
 
 import java.util.ArrayList;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Represents the result-set of all detected blobs as ArrayList
@@ -67,4 +70,5 @@ public class ManyBlobs extends ArrayList<Blob> {
 			blob.createLineOrdering();
 		}
 	}
+
 }

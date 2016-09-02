@@ -26,7 +26,12 @@ public class Extract_Streets implements PlugInFilter {
         dialog.addNumericField("Min contour length", Constants.MIN_CONTOUR_LENGTH, 0);
         dialog.addNumericField("DBSCAN epsilon", Constants.DBSCAN_EPSILON, 0);
         dialog.addNumericField("DBSCAN minPts", Constants.DBSCAN_MINPTS, 0);
+        dialog.addNumericField("Dotted line blob size", Constants.DOTTED_LINE_BLOB_SIZE, 0);
+        dialog.addNumericField("Dotted line cone angle", Constants.DOTTED_LINE_CONE_ANGLE, 0);
+        dialog.addNumericField("Dotted line cone length", Constants.DOTTED_LINE_CONE_LENGTH, 0);
         dialog.addNumericField("Line following sample rate", Constants.CONTOUR_FOLLOW_SAMPLE_RATE, 0);
+        dialog.addNumericField("Min Street Width", Constants.MIN_STREET_WIDTH, 0);
+        dialog.addNumericField("Max Street Width", Constants.MAX_STREET_WIDTH, 0);
         dialog.addNumericField("Cone angle", Constants.CONE_ANGLE, 0);
         dialog.addNumericField("Cone length", Constants.CONE_LENGTH, 0);
         dialog.addNumericField("Max angle diff for following lines", Constants.MAX_ANGLE_DIFF_CONES, 0);
@@ -46,6 +51,11 @@ public class Extract_Streets implements PlugInFilter {
             int minContourLength = (int)dialog.getNextNumber();
             int dbscanEpsilon = (int) dialog.getNextNumber();
             int dbscanMinPts = (int) dialog.getNextNumber();
+            int dottedLineBlobSize = (int) dialog.getNextNumber();
+            int dottedLineConeAngle = (int) dialog.getNextNumber();
+            int dottedLineConeLength = (int) dialog.getNextNumber();
+            int minStreetWidth = (int) dialog.getNextNumber();
+            int maxStreetWidth = (int) dialog.getNextNumber();
             int lineFollowingSampleRate = (int)dialog.getNextNumber();
             int coneAngle = (int)dialog.getNextNumber();
             int coneLength = (int)dialog.getNextNumber();
@@ -60,7 +70,13 @@ public class Extract_Streets implements PlugInFilter {
             StreetsExtractor extractor;
             if(dialog.getNextChoice().equals("pale")) {
                 //ImagePlus cannyImage = IJ.openImage();
-                extractor = new PaleStreetsExtractor(_image, sampleRate, maxAngleDiff, minContourLength, dbscanEpsilon, dbscanMinPts, lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2);
+                extractor = new PaleStreetsExtractor(_image,
+                        sampleRate, maxAngleDiff,
+                        minContourLength,
+                        dbscanEpsilon, dbscanMinPts,
+                        dottedLineBlobSize, dottedLineConeAngle, dottedLineConeLength,
+                        minStreetWidth, maxStreetWidth,
+                        lineFollowingSampleRate, coneAngle, coneLength, maxAngleDiff2);
             } else {
                 extractor = new ColoredStreetsExtractor(_image, minHueColored, maxHueColored, minSatColored, maxSatColored, minBrightColored, maxBrightColored, streetWidth);
             }
@@ -79,6 +95,7 @@ public class Extract_Streets implements PlugInFilter {
         System.setProperty("plugins.dir", pluginsDir);
         new ImageJ();
         ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
+        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\test.png");
         image.show();
         IJ.runPlugIn(clazz.getName(), "");
     }
