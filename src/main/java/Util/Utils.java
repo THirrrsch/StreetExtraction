@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Utils {
-    public Utils() {
+    private Utils() {
     }
 
     public static List<Point> getBresenhamPoints(int x1, int y1, int x2, int y2) {
@@ -94,7 +94,12 @@ public class Utils {
 
     // 0 - 360
     public static double getAngle(int startX, int endX, int startY, int endY) {
-        double angleRAD = Math.atan2((double)(endY - startY), (double)(endX - startX));
+        return getAngleDiff(endX - startX, endY - startY);
+    }
+
+    // 0 - 360
+    public static double getAngle(int dX, int dY) {
+        double angleRAD = Math.atan2((double)(dY), (double)(dX));
         return angleRAD * 180 / Math.PI;
     }
 

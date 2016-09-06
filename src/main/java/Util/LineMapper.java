@@ -27,14 +27,14 @@ public class LineMapper {
         }
     }
 
-    public Set<Line> getIntersectedLines(List<Point> points) {
-        Set<Line> result = new HashSet<Line>();
-        List<Line> linesAtCurrentPosition;
+    public Map<Point, List<Line>> getIntersectedLines(List<Point> points) {
+        Map<Point, List<Line>> result = new HashMap<Point, List<Line>>();
+        List<Line> intersectedLines;
 
         for (Point p : points) {
-            linesAtCurrentPosition = _lineMap.get(p);
-            if (linesAtCurrentPosition != null) {
-                result.addAll(linesAtCurrentPosition);
+            intersectedLines = _lineMap.get(p);
+            if (intersectedLines != null) {
+                result.put(p, intersectedLines);
             }
         }
 

@@ -19,34 +19,33 @@ TABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 
 package blob;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.process.ImageStatistics;
 
 import java.util.ArrayList;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-/**
- * Represents the result-set of all detected blobs as ArrayList
- * @author Thorsten Wagner
- */
+import java.util.List;
 
 public class ManyBlobs extends ArrayList<Blob> {
 
 	private static final long serialVersionUID = 1L;
-	private ImagePlus binaryImage = null;
+
+	private ImagePlus _binaryImage = null;
+	private List<Line> _dottedLines = null;
 
 	public ManyBlobs() {
 
 	}
 
 	public ManyBlobs(ImagePlus binaryImage) {
-		setImage(binaryImage);
+		setBinaryImage(binaryImage);
 	}
-	
-	private void setImage(ImagePlus imp) {
-		this.binaryImage = imp;
+
+	public ImagePlus getBinaryImage() {
+		return _binaryImage;
+	}
+
+	private void setBinaryImage(ImagePlus imp) {
+		_binaryImage = imp;
 		ImageStatistics stats = imp.getStatistics();
 		
 		boolean notBinary = (stats.histogram[0] + stats.histogram[255]) != stats.pixelCount;
@@ -57,11 +56,19 @@ public class ManyBlobs extends ArrayList<Blob> {
 		}
 	}
 
+	public void setDottedLines(List<Line> dottedLines) {
+		_dottedLines = dottedLines;
+	}
+
+	public List<Line> getDottedLines() {
+		return _dottedLines;
+	}
+
 	public void findConnectedComponents() {
-		if(binaryImage==null){
+		if(_binaryImage ==null){
 			throw new RuntimeException("Cannot run findConnectedComponents: No input image specified");
 		}
-		ConnectedComponentLabeler labeler = new ConnectedComponentLabeler(this, binaryImage, 255, 0);
+		ConnectedComponentLabeler labeler = new ConnectedComponentLabeler(this, _binaryImage, 255, 0);
 		labeler.doConnectedComponents();
 	}
 
@@ -70,5 +77,11 @@ public class ManyBlobs extends ArrayList<Blob> {
 			blob.createLineOrdering();
 		}
 	}
+
+	public void computeFeatures() {
+		FeatureCalculator calculator = new FeatureCalculator(this);
+		calculator.calculateFeatures();
+	}
+
 
 }

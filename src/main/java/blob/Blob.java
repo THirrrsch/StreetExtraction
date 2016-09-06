@@ -49,6 +49,42 @@ public class Blob {
 	private Point2D  centerOfGrafity = null;
 	private Point centroid = null;
 	private double enclosedArea = -1;
+	private int length = -1;
+	private boolean isInCluster = false;
+	private double parallelCoverage = -1;
+	private int lineFollowingElements = -1;
+
+	public int getLength() {
+		return length;
+	}
+
+	public void setLength(int length) {
+		this.length = length;
+	}
+
+	public boolean isInCluster() {
+		return isInCluster;
+	}
+
+	public void setInCluster(boolean inCluster) {
+		isInCluster = inCluster;
+	}
+
+	public double getParallelCoverage() {
+		return parallelCoverage;
+	}
+
+	public void setParallelCoverage(double parallelCoverage) {
+		this.parallelCoverage = parallelCoverage;
+	}
+
+	public int getLineFollowingElements() {
+		return lineFollowingElements;
+	}
+
+	public void setLineFollowingElements(int lineFollowingElements) {
+		this.lineFollowingElements = lineFollowingElements;
+	}
 
 	private Calibration cal = new Calibration();
 

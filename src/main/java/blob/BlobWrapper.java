@@ -9,9 +9,8 @@ public class BlobWrapper implements Clusterable {
 
     public BlobWrapper(Blob blob) {
         this._blob = blob;
-        double length = blob.getOuterContour().npoints / 2;
-        double angle = this.getAngle180Positive(blob.getLineX()[0], blob.getLineX()[(int)length], blob.getLineY()[0], blob.getLineY()[(int) length]);
-        this._points = new double[] {length, angle};
+        double angle = this.getAngle180Positive(blob.getLineX()[0], blob.getLineX()[blob.getLength()], blob.getLineY()[0], blob.getLineY()[blob.getLength()]);
+        this._points = new double[] {blob.getLength(), angle};
     }
 
     public Blob getBlob() {

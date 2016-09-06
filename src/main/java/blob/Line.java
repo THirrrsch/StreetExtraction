@@ -1,5 +1,6 @@
 package blob;
 
+import Util.Constants;
 import Util.Utils;
 import blob.Blob;
 import ij.process.ImageProcessor;
@@ -60,5 +61,30 @@ public class Line {
 
     public boolean containsAny(List<Point> points) {
         return !Collections.disjoint(_points, points);
+    }
+
+    public double getAngleAt(Point p) {
+        int i = _points.indexOf(p);
+        if (i == -1) {
+            throw new IndexOutOfBoundsException(); // shouldn't happen
+        } else {
+            int sampleRate = Constants.SAMPLE_RATE;
+            int halfSampleRate = sampleRate / 2;
+            Point pStart;
+            Point pEnd;
+
+            if (i - halfSampleRate < 0) {
+                pStart = _points.get(0);
+                pEnd = _points.get(sampleRate - 1);
+            } else if (i + halfSampleRate >= _points.size()) {
+                pStart = _points.get(_points.size() - sampleRate);
+                pEnd = _points.get(_points.size() - 1);
+            } else {
+                pStart = _points.get(i - halfSampleRate);
+                pEnd = _points.get(i + halfSampleRate);
+            }
+
+            return Utils.getAngle(pStart.x, pEnd.x, pStart.y, pEnd.y);
+        }
     }
 }
