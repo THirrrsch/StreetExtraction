@@ -92,6 +92,17 @@ public class Utils {
         }
     }
 
+    public static int increaseConeOffset(int offset) {
+        if (offset == 0) {
+            return -1;
+        } else if (offset < 0) {
+            return (offset * -1);
+        } else {
+            ++offset;
+            return (offset * -1);
+        }
+    }
+
     // 0 - 360
     public static double getAngle(int startX, int endX, int startY, int endY) {
         return getAngleDiff(endX - startX, endY - startY);

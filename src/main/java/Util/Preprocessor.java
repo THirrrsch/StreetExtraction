@@ -177,7 +177,7 @@ public class Preprocessor {
                         }
                     }
 
-                    offset = this.increaseConeOffset(offset);
+                    offset = Utils.increaseConeOffset(offset);
                 }
 
                 if (lastBlobAdded != null) {
@@ -223,17 +223,6 @@ public class Preprocessor {
             }
 
             offset++;
-        }
-    }
-
-    private int increaseConeOffset(int offset) {
-        if (offset == 0) {
-            return -1;
-        } else if (offset < 0) {
-            return (offset * -1);
-        } else {
-            ++offset;
-            return (offset * -1);
         }
     }
 
