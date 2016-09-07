@@ -127,59 +127,78 @@ class FeatureCalculator {
 
     private void calculateLineFollowingSegments() {
         BlobMapper mapper = new BlobMapper(_blobs);
-        int _lineFollowingSampleRate = Constants.CONTOUR_FOLLOW_SAMPLE_RATE;
-        int _coneAngle = Constants.CONE_ANGLE;
-        int _coneLength = Constants.CONE_LENGTH;
+        int lineFollowingSampleRate = Constants.CONTOUR_FOLLOW_SAMPLE_RATE;
+        int coneAngle = Constants.CONE_ANGLE;
+        int coneLength = Constants.CONE_LENGTH;
 
         for (Blob blob : _blobs) {
-            int[] contourX = blob.getLineX();
-            int[] contourY = blob.getLineY();
-            int end = blob.getOuterContour().npoints / 2;
-            boolean firstPart = true;
+            boolean foundFirstPoint = true;
+            int segmentCount = 1;
 
-            for (int i = 0; i < 2; ++i) {
-                int x1 = firstPart ? contourX[_lineFollowingSampleRate] : contourX[end - _lineFollowingSampleRate];
-                int y1 = firstPart ? contourY[_lineFollowingSampleRate] : contourY[end - _lineFollowingSampleRate];
-                int startX = firstPart ? contourX[0] : contourX[end];
-                int startY = firstPart ? contourY[0] : contourY[end];
-                double baseAngle = Utils.getAngle(x1, startX, y1, startY);
-                int offset = 0;
+            for (int i = 0; i < 2; i++) {
+                Blob lastBlobAdded = blob;
 
-                while (offset < _coneAngle) {
-                    double currentAngle = baseAngle + (double) offset;
-                    double currentAngleRAD = Math.PI * currentAngle / 180;
-                    int endX = (int) ((double) startX + (double) _coneLength * Math.cos(currentAngleRAD));
-                    int endY = (int) ((double) startY + (double) _coneLength * Math.sin(currentAngleRAD));
-                    List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
+                while (lastBlobAdded != null) {
+                    int[] contourX = lastBlobAdded.getLineX();
+                    int[] contourY = lastBlobAdded.getLineY();
+                    int end = lastBlobAdded.getLength();
 
-                    for (Point p : points) {
-                        for (int j = 0; j < 2; j++) {
-                            Blob candidate = (j == 0) ? mapper.getBlobWithGivenFirstPoint(p) : mapper.getBlobWithGivenLastPoint(p);
-                            if (candidate != null) {
-                                int[] candidateContourX = candidate.getLineX();
-                                int[] candidateContourY = candidate.getLineY();
-                                int candidateEnd = candidate.getOuterContour().npoints / 2;
-                                double angle = (j == 0) ? Utils.getAngle(contourX[0], contourX[_lineFollowingSampleRate], contourY[0], contourY[_lineFollowingSampleRate])
-                                        : Utils.getAngle(contourX[end], contourX[end - _lineFollowingSampleRate], contourY[end], contourY[end - _lineFollowingSampleRate]);
-                                if (Utils.getAngleDiff(baseAngle, angle) < (double) _maxAngleDiffCone) {
-                                    streetImageProcessor.drawLine(points.get(0).x, points.get(0).y, p.x, p.y);
-                                    return true;
-                                }
+                    int x1 = foundFirstPoint ? contourX[lineFollowingSampleRate] : contourX[end - lineFollowingSampleRate];
+                    int y1 = foundFirstPoint ? contourY[lineFollowingSampleRate] : contourY[end - lineFollowingSampleRate];
+                    int startX = foundFirstPoint ? contourX[0] : contourX[end];
+                    int startY = foundFirstPoint ? contourY[0] : contourY[end];
+                    double baseAngle = Utils.getAngle(x1, startX, y1, startY);
+                    int offset = 0;
+
+                    while (offset < coneAngle) {
+                        double currentAngle = baseAngle + (double) offset;
+                        double currentAngleRAD = Math.PI * currentAngle / 180;
+                        int endX = (int) ((double) startX + (double) coneLength * Math.cos(currentAngleRAD));
+                        int endY = (int) ((double) startY + (double) coneLength * Math.sin(currentAngleRAD));
+                        List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
+
+                        lastBlobAdded = this.getLineFollowingBlob(baseAngle, points, mapper, true);
+                        if (lastBlobAdded != null) {
+                            foundFirstPoint = true;
+                            segmentCount++;
+                            break;
+                        } else {
+                            lastBlobAdded = this.getLineFollowingBlob(baseAngle, points, mapper, false);
+                            if (lastBlobAdded != null) {
+                                foundFirstPoint = false;
+                                segmentCount++;
+                                break;
                             }
                         }
-                    }
 
-                    if (this.couldFollow(points, mapper, baseAngle, streetImageProcessor, inputBlobs)) {
-                        blob.draw(streetImageProcessor);
-                        break;
+                        offset = Utils.increaseConeOffset(offset);
                     }
-
-                    offset = Utils.increaseConeOffset(offset);
                 }
-
-                firstPart = !firstPart;
+                foundFirstPoint = false;
             }
+            blob.setLineFollowingElements(segmentCount);
         }
     }
 
+    private Blob getLineFollowingBlob(double baseAngle, List<Point> points, BlobMapper mapper, boolean lookForFirstPoint) {
+        int maxAngleDiffCones = Constants.MAX_ANGLE_DIFF_CONES;
+        int lineFollowingSampleRate = Constants.CONTOUR_FOLLOW_SAMPLE_RATE;
+
+        for (Point p : points) {
+            Blob candidate = lookForFirstPoint ? mapper.getBlobWithGivenFirstPoint(p) : mapper.getBlobWithGivenLastPoint(p);
+            if (candidate != null) {
+                int[] contourX = candidate.getLineX();
+                int[] contourY = candidate.getLineY();
+                int end = candidate.getLength();
+                double angle = lookForFirstPoint
+                        ? Utils.getAngle(contourX[0], contourX[lineFollowingSampleRate], contourY[0], contourY[lineFollowingSampleRate])
+                        : Utils.getAngle(contourX[end], contourX[end - lineFollowingSampleRate], contourY[end], contourY[end - lineFollowingSampleRate]);
+
+                if (Utils.getAngleDiff(baseAngle, angle) < (double) maxAngleDiffCones) {
+                    return candidate;
+                }
+            }
+        }
+        return null;
+    }
 }

@@ -17,7 +17,7 @@ public class BlobMapper {
         for (Blob blob : blobs) {
             int[] contourX = blob.getLineX();
             int[] contourY = blob.getLineY();
-            int end = blob.getOuterContour().npoints / 2;
+            int end = blob.getLength();
 
             _blobMap.put(new Point(contourX[0], contourY[0]), blob);
             _blobMap.put(new Point(contourX[end], contourY[end]), blob);
@@ -35,7 +35,7 @@ public class BlobMapper {
     public Blob getBlobWithGivenLastPoint(Point p) {
         Blob result = _blobMap.get(p);
         if (result != null) {
-            int end = result.getOuterContour().npoints / 2;
+            int end = result.getLength();
             if (result.getLineX()[end] == p.x && result.getLineY()[end] == p.y) {
                 return result;
             }

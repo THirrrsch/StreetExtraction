@@ -27,7 +27,7 @@ public class Line {
     public Line(Blob blob) {
         int[] xPoints = blob.getLineX();
         int[] yPoints = blob.getLineY();
-        int end = blob.getOuterContour().npoints / 2;
+        int end = blob.getLength();
         _points = new ArrayList<Point>();
 
         for (int i = 0; i < end; i++) {
