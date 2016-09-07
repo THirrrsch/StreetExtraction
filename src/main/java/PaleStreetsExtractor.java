@@ -26,10 +26,12 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         // 2 calculate necessary features
         _allBlobs = preprocessor.getProcessedBlobs();
         _allBlobs.computeFeatures();
+
+        System.out.println("läuft");
     }
 
     public ImagePlus process() {
-        return null;
+        return _cannyImage;
     }
 
 }

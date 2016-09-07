@@ -25,8 +25,8 @@ public interface Constants {
     int MAX_STREET_WIDTH = 20;
 
     int CONTOUR_FOLLOW_SAMPLE_RATE = 20;
-    int CONE_ANGLE = 30;
-    int CONE_LENGTH = 70;
+    int CONE_ANGLE = 20;
+    int CONE_LENGTH = 50;
     int MAX_ANGLE_DIFF_CONES = 20;
 
     int MIN_HUE_COLORED = 10;

@@ -60,8 +60,8 @@ public class Extract_Streets implements PlugInFilter {
         String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
         System.setProperty("plugins.dir", pluginsDir);
         new ImageJ();
-        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
-        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\test.png");
+        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
+        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\test.png");
         image.show();
         IJ.runPlugIn(clazz.getName(), "");
     }

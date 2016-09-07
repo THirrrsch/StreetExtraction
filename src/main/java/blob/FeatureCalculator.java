@@ -4,9 +4,7 @@ import Util.BlobMapper;
 import Util.Constants;
 import Util.LineMapper;
 import Util.Utils;
-import com.sun.tools.internal.jxc.ap.Const;
 import ij.ImagePlus;
-import ij.gui.NewImage;
 import ij.process.ImageProcessor;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
@@ -15,14 +13,23 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 class FeatureCalculator {
 
     private ManyBlobs _blobs;
+    private ImagePlus _binaryImage;
+    private int _width;
+    private int _height;
 
     public FeatureCalculator(ManyBlobs blobs) {
         _blobs = blobs;
+    }
+
+    public FeatureCalculator(ManyBlobs blobs, ImagePlus binaryImage) {
+        _blobs = blobs;
+        _binaryImage = binaryImage;
+        _width = binaryImage.getWidth();
+        _height = binaryImage.getHeight();
     }
 
     public void calculateFeatures() {
@@ -48,7 +55,6 @@ class FeatureCalculator {
                 wrapper.getBlob().setInCluster(true);
             }
         }
-
     }
 
     private void calculateParallelCoverage() {
@@ -101,7 +107,7 @@ class FeatureCalculator {
             int maxParallelCount = parallelCountClock > parallelCountCounterClock ? parallelCountClock : parallelCountCounterClock;
             if (maxParallelCount > 0) {
                 int maxSegments = blob.getLength() / sampleRate;
-                blob.setParallelCoverage(maxParallelCount / maxSegments);
+                blob.setParallelCoverage((double)maxParallelCount / maxSegments);
             } else {
                 blob.setParallelCoverage(0);
             }
@@ -143,10 +149,10 @@ class FeatureCalculator {
                     int[] contourY = lastBlobAdded.getLineY();
                     int end = lastBlobAdded.getLength();
 
-                    int x1 = foundFirstPoint ? contourX[lineFollowingSampleRate] : contourX[end - lineFollowingSampleRate];
-                    int y1 = foundFirstPoint ? contourY[lineFollowingSampleRate] : contourY[end - lineFollowingSampleRate];
-                    int startX = foundFirstPoint ? contourX[0] : contourX[end];
-                    int startY = foundFirstPoint ? contourY[0] : contourY[end];
+                    int x1 = foundFirstPoint ? contourX[end - lineFollowingSampleRate] : contourX[lineFollowingSampleRate];
+                    int y1 = foundFirstPoint ? contourY[end - lineFollowingSampleRate] : contourY[lineFollowingSampleRate];
+                    int startX = foundFirstPoint ? contourX[end] : contourX[0];
+                    int startY = foundFirstPoint ? contourY[end] : contourY[0];
                     double baseAngle = Utils.getAngle(x1, startX, y1, startY);
                     int offset = 0;
 
@@ -200,5 +206,9 @@ class FeatureCalculator {
             }
         }
         return null;
+    }
+
+    private boolean isInImageRange(int x, int y) {
+        return x > -1 && x < _width && y > -1 && y < _height;
     }
 }

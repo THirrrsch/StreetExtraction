@@ -35,6 +35,7 @@ public class Preprocessor {
 
         List<Line> dottedLines = this.getDottedLines(_rawBlobs);
         _processedBlobs.setDottedLines(dottedLines);
+        _processedBlobs.setBinaryImage(_rawBlobs.getBinaryImage());
     }
 
     public ManyBlobs getProcessedBlobs() {
@@ -116,6 +117,10 @@ public class Preprocessor {
                 smallBlobs.add(blob);
                 centroids.put(centroid, blob);
             }
+        }
+
+        if (smallBlobs.size() == 1) {
+            return result;
         }
 
         // TODO re-use already used centroids or not?

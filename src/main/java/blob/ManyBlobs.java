@@ -44,7 +44,7 @@ public class ManyBlobs extends ArrayList<Blob> {
 		return _binaryImage;
 	}
 
-	private void setBinaryImage(ImagePlus imp) {
+	public void setBinaryImage(ImagePlus imp) {
 		_binaryImage = imp;
 		ImageStatistics stats = imp.getStatistics();
 		
@@ -79,7 +79,7 @@ public class ManyBlobs extends ArrayList<Blob> {
 	}
 
 	public void computeFeatures() {
-		FeatureCalculator calculator = new FeatureCalculator(this);
+		FeatureCalculator calculator = new FeatureCalculator(this, _binaryImage);
 		calculator.calculateFeatures();
 	}
 

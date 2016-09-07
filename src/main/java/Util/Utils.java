@@ -1,10 +1,13 @@
 package Util;
 
 import blob.Blob;
+import blob.ManyBlobs;
 import ij.process.ImageProcessor;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,6 +95,32 @@ public class Utils {
         }
     }
 
+    public static void printBlobsToCSV(ManyBlobs blobs) {
+        try
+        {
+            FileWriter writer = new FileWriter("C:\\Users\\Hirsch\\Desktop\\test.csv");
+
+            for (Blob blob : blobs) {
+                int end = blob.getOuterContour().npoints / 2;
+                int[] contourX = blob.getLineX();
+                int[] contourY = blob.getLineY();
+                double angle = Utils.getAngle(contourX[0], contourX[end], contourY[0], contourY[end]);
+
+                writer.append(String.valueOf(end));
+                writer.append(' ');
+                writer.append(String.valueOf(angle));
+                writer.append('\n');
+            }
+
+            writer.flush();
+            writer.close();
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     public static int increaseConeOffset(int offset) {
         if (offset == 0) {
             return -1;
@@ -105,7 +134,7 @@ public class Utils {
 
     // 0 - 360
     public static double getAngle(int startX, int endX, int startY, int endY) {
-        return getAngleDiff(endX - startX, endY - startY);
+        return getAngle(endX - startX, endY - startY);
     }
 
     // 0 - 360

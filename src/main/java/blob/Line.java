@@ -41,7 +41,7 @@ public class Line {
     public Line(List<Blob> lineBlobs) {
         _points = new ArrayList<Point>();
 
-        for (int i = 0; i < lineBlobs.size() - 2; i++) {
+        for (int i = 0; i < lineBlobs.size() - 1; i++) {
             Point centroidA = lineBlobs.get(i).getCentroid();
             Point centroidB = lineBlobs.get(i + 1).getCentroid();
 
