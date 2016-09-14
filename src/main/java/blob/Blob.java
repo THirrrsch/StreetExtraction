@@ -275,6 +275,31 @@ public class Blob {
 	public int getNumberofHoles() {
 		return innerContours.size();
 	}
+
+	public Point[] getMinimumBoundingRectangle(){
+		int[] xp = new int[getOuterContour().npoints];
+		int[] yp = new int[getOuterContour().npoints];
+		for(int i = 0; i < getOuterContour().npoints; i++){
+			xp[i] = getOuterContour().xpoints[i];
+			yp[i] = getOuterContour().ypoints[i];
+		}
+		Point2D.Double[] mbr;
+		try{
+			mbr = RotatingCalipers.getMinimumBoundingRectangle(xp, yp);
+		}
+		catch(IllegalArgumentException e){
+			return null;
+		}
+		Point[] p = new Point[4];
+		for(int i = 0; i < mbr.length; i++){
+			//IJ.log("i " + i);
+			p[i] = new Point();
+			p[i].x = (int)mbr[i].x;
+			p[i].y = (int)mbr[i].y;
+		}
+		return p;
+
+	}
 	
 	public static ImagePlus generateBlobImage(Blob b){
 		Rectangle r = b.getOuterContour().getBounds();
