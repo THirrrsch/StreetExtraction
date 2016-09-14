@@ -65,11 +65,11 @@ public class FeatureEvaluator {
             int length = blob.getLength();
             double prohability;
             if (length <= _lengthValues.INFIMUM) {
-                prohability = EvaluationConstants.MIN_PROHABILITY;
+                prohability = EvaluationConstants.MIN_PROBABILITY;
             } else if (length <= _lengthValues.SUPREMUM) {
-                prohability = EvaluationConstants.MID_PROHABILITY;
+                prohability = EvaluationConstants.EVEN_PROBABILITY;
             } else {
-                prohability = EvaluationConstants.MAX_PROHABILITY;
+                prohability = EvaluationConstants.MAX_PROBABILITY;
             }
 
             result.put(blob, prohability);
@@ -83,9 +83,9 @@ public class FeatureEvaluator {
 
         for (Blob blob : _inputBlobs) {
             if (blob.isInCluster()) {
-                result.put(blob, EvaluationConstants.MIN_PROHABILITY);
+                result.put(blob, EvaluationConstants.MIN_PROBABILITY);
             } else {
-                result.put(blob, EvaluationConstants.MID_PROHABILITY);
+                result.put(blob, EvaluationConstants.EVEN_PROBABILITY);
             }
         }
 
@@ -99,11 +99,11 @@ public class FeatureEvaluator {
             double parallelCoverage = blob.getParallelCoverage();
             double probability;
             if (parallelCoverage <= _parallelCoverageValues.INFIMUM) {
-                probability = EvaluationConstants.MIN_PROHABILITY;
+                probability = EvaluationConstants.MIN_PROBABILITY;
             } else if (parallelCoverage <= _parallelCoverageValues.SUPREMUM) {
-                probability = EvaluationConstants.MID_PROHABILITY;
+                probability = EvaluationConstants.EVEN_PROBABILITY;
             } else {
-                probability = EvaluationConstants.MAX_PROHABILITY;
+                probability = EvaluationConstants.MAX_PROBABILITY;
             }
 
             result.put(blob, probability);
@@ -119,11 +119,11 @@ public class FeatureEvaluator {
             int lineFollowingSegmentCount = blob.getLineFollowingElements();
             double probability;
             if (lineFollowingSegmentCount <= _lineFollowingValues.INFIMUM) {
-                probability = EvaluationConstants.MIN_PROHABILITY;
+                probability = EvaluationConstants.MIN_PROBABILITY;
             } else if (lineFollowingSegmentCount <= _lineFollowingValues.SUPREMUM) {
-                probability = EvaluationConstants.MID_PROHABILITY;
+                probability = EvaluationConstants.EVEN_PROBABILITY;
             } else {
-                probability = EvaluationConstants.MAX_PROHABILITY;
+                probability = EvaluationConstants.MAX_PROBABILITY;
             }
 
             result.put(blob, probability);
