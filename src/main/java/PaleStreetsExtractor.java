@@ -1,15 +1,17 @@
 import Util.Preprocessor;
+import blob.FeatureEvaluator;
 import blob.ManyBlobs;
+import com.sun.org.apache.xalan.internal.utils.FeatureManager;
 import ij.ImagePlus;
 
 public class PaleStreetsExtractor implements StreetsExtractor {
 
     private final ImagePlus _cannyImage;
-    private final ManyBlobs _allBlobs;
+    private final FeatureEvaluator _evaluator;
+
     private ImagePlus combinedImage;
 
     public PaleStreetsExtractor(ImagePlus cannyImage) {
-
         _cannyImage = cannyImage;
 
         // find initial blobs
@@ -24,14 +26,14 @@ public class PaleStreetsExtractor implements StreetsExtractor {
 
         // 1 get the (preprocessed) blobs to work with
         // 2 calculate necessary features
-        _allBlobs = preprocessor.getProcessedBlobs();
-        _allBlobs.computeFeatures();
+        ManyBlobs preprocessedBlobs = preprocessor.getProcessedBlobs();
+        preprocessedBlobs.computeFeatures();
 
-        System.out.println("läuft");
+        _evaluator = new FeatureEvaluator(preprocessedBlobs, _cannyImage.getWidth(), _cannyImage.getHeight());
     }
 
     public ImagePlus process() {
-        return _cannyImage;
+        return _evaluator.getEvaluatedResult();
     }
 
 }

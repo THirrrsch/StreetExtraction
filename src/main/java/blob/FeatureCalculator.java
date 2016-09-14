@@ -1,11 +1,10 @@
 package blob;
 
 import Util.BlobMapper;
-import Util.Constants;
+import Util.FeatureConstants;
 import Util.LineMapper;
 import Util.Utils;
 import ij.ImagePlus;
-import ij.process.ImageProcessor;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
@@ -39,8 +38,8 @@ class FeatureCalculator {
     }
 
     private void checkClustering() {
-        double epsilon = Constants.DBSCAN_EPSILON;
-        int minPts = Constants.DBSCAN_MINPTS;
+        double epsilon = FeatureConstants.DBSCAN_EPSILON;
+        int minPts = FeatureConstants.DBSCAN_MINPTS;
 
         List<BlobWrapper> clusterInput = new ArrayList<BlobWrapper>(_blobs.size());
         for (Blob blob : _blobs) {
@@ -65,9 +64,9 @@ class FeatureCalculator {
         }
         LineMapper mapper = new LineMapper(inputLines);
 
-        int sampleRate = Constants.SAMPLE_RATE;
-        int minStreetWidth = Constants.MIN_STREET_WIDTH;
-        int maxStreetWidth = Constants.MAX_STREET_WIDTH;
+        int sampleRate = FeatureConstants.SAMPLE_RATE;
+        int minStreetWidth = FeatureConstants.MIN_STREET_WIDTH;
+        int maxStreetWidth = FeatureConstants.MAX_STREET_WIDTH;
 
         for (Blob blob : _blobs) {
             int parallelCountClock = 0;
@@ -116,7 +115,7 @@ class FeatureCalculator {
 
     private boolean doesParallelLineExist(double currentAngle, List<Point> points, LineMapper mapper) {
         Map<Point, List<Line>> intersectedLines = mapper.getIntersectedLines(points);
-        int maxAngleDiff = Constants.MAX_ANGLE_DIFF;
+        int maxAngleDiff = FeatureConstants.MAX_ANGLE_DIFF;
 
         for (Map.Entry<Point, List<Line>> entry : intersectedLines.entrySet()) {
             Point p = entry.getKey();
@@ -133,9 +132,9 @@ class FeatureCalculator {
 
     private void calculateLineFollowingSegments() {
         BlobMapper mapper = new BlobMapper(_blobs);
-        int lineFollowingSampleRate = Constants.CONTOUR_FOLLOW_SAMPLE_RATE;
-        int coneAngle = Constants.CONE_ANGLE;
-        int coneLength = Constants.CONE_LENGTH;
+        int lineFollowingSampleRate = FeatureConstants.CONTOUR_FOLLOW_SAMPLE_RATE;
+        int coneAngle = FeatureConstants.CONE_ANGLE;
+        int coneLength = FeatureConstants.CONE_LENGTH;
 
         for (Blob blob : _blobs) {
             boolean foundFirstPoint = true;
@@ -187,8 +186,8 @@ class FeatureCalculator {
     }
 
     private Blob getLineFollowingBlob(double baseAngle, List<Point> points, BlobMapper mapper, boolean lookForFirstPoint) {
-        int maxAngleDiffCones = Constants.MAX_ANGLE_DIFF_CONES;
-        int lineFollowingSampleRate = Constants.CONTOUR_FOLLOW_SAMPLE_RATE;
+        int maxAngleDiffCones = FeatureConstants.MAX_ANGLE_DIFF_CONES;
+        int lineFollowingSampleRate = FeatureConstants.CONTOUR_FOLLOW_SAMPLE_RATE;
 
         for (Point p : points) {
             Blob candidate = lookForFirstPoint ? mapper.getBlobWithGivenFirstPoint(p) : mapper.getBlobWithGivenLastPoint(p);

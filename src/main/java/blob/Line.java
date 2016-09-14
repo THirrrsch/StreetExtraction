@@ -1,8 +1,7 @@
 package blob;
 
-import Util.Constants;
+import Util.FeatureConstants;
 import Util.Utils;
-import blob.Blob;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
@@ -68,7 +67,7 @@ public class Line {
         if (i == -1) {
             throw new IndexOutOfBoundsException(); // shouldn't happen
         } else {
-            int sampleRate = Constants.SAMPLE_RATE;
+            int sampleRate = FeatureConstants.SAMPLE_RATE;
             int halfSampleRate = sampleRate / 2;
             Point pStart;
             Point pEnd;

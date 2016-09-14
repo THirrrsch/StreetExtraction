@@ -1,6 +1,6 @@
 package Util;
 
-public interface Constants {
+public interface FeatureConstants {
     int SAMPLE_RATE = 5;
     int MAX_ANGLE_DIFF = 20;
 

@@ -1,12 +1,10 @@
-import Util.Constants;
+import Util.FeatureConstants;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-
-import java.awt.*;
 
 public class Extract_Streets implements PlugInFilter {
     private ImagePlus _image;
@@ -22,13 +20,13 @@ public class Extract_Streets implements PlugInFilter {
     public void run(ImageProcessor ip) {
         GenericDialog dialog = new GenericDialog("Options");
         dialog.addChoice("Image type", new String[]{"pale", "colored"}, "pale");
-        dialog.addNumericField("Min hue colored", Constants.MIN_HUE_COLORED, 0);
-        dialog.addNumericField("Max hue colored", Constants.MAX_HUE_COLORED, 0);
-        dialog.addNumericField("Min saturation colored", Constants.MIN_SATURATION_COLORED, 0);
-        dialog.addNumericField("Max saturation colored", Constants.MAX_SATURATION_COLORED, 0);
-        dialog.addNumericField("Min brightness colored", Constants.MIN_BRIGHTNESS_COLORED, 0);
-        dialog.addNumericField("Max brightness colored", Constants.MAX_BRIGHTNESS_COLORED, 0);
-        dialog.addNumericField("Street Width", Constants.STREET_WIDTH, 0);
+        dialog.addNumericField("Min hue colored", FeatureConstants.MIN_HUE_COLORED, 0);
+        dialog.addNumericField("Max hue colored", FeatureConstants.MAX_HUE_COLORED, 0);
+        dialog.addNumericField("Min saturation colored", FeatureConstants.MIN_SATURATION_COLORED, 0);
+        dialog.addNumericField("Max saturation colored", FeatureConstants.MAX_SATURATION_COLORED, 0);
+        dialog.addNumericField("Min brightness colored", FeatureConstants.MIN_BRIGHTNESS_COLORED, 0);
+        dialog.addNumericField("Max brightness colored", FeatureConstants.MAX_BRIGHTNESS_COLORED, 0);
+        dialog.addNumericField("Street Width", FeatureConstants.STREET_WIDTH, 0);
         dialog.showDialog();
 
         if(!dialog.wasCanceled()) {
@@ -60,8 +58,8 @@ public class Extract_Streets implements PlugInFilter {
         String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
         System.setProperty("plugins.dir", pluginsDir);
         new ImageJ();
-        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
-        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\test.png");
+        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
+        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\test.png");
         image.show();
         IJ.runPlugIn(clazz.getName(), "");
     }

@@ -3,7 +3,6 @@ package Util;
 import blob.Blob;
 import blob.Line;
 import blob.ManyBlobs;
-import com.sun.tools.classfile.ConstantPool;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.process.ImageProcessor;
@@ -48,8 +47,8 @@ public class Preprocessor {
         double angleDiff;
         int width = inputBlobs.getBinaryImage().getWidth();
         int height = inputBlobs.getBinaryImage().getHeight();
-        int sampleRate = Constants.SAMPLE_RATE;
-        int maxAngleDiff = Constants.MAX_ANGLE_DIFF;
+        int sampleRate = FeatureConstants.SAMPLE_RATE;
+        int maxAngleDiff = FeatureConstants.MAX_ANGLE_DIFF;
 
         ImagePlus straightLineImage = NewImage.createByteImage("straight line image", width, height, 1, 4);
         ImageProcessor straightLineProcessor = straightLineImage.getProcessor();
@@ -92,7 +91,7 @@ public class Preprocessor {
 
     private ManyBlobs getLongBlobs(ManyBlobs inputBlobs) {
         ManyBlobs result = new ManyBlobs();
-        int minLength = Constants.MIN_CONTOUR_LENGTH;
+        int minLength = FeatureConstants.MIN_CONTOUR_LENGTH;
         for (Blob blob : inputBlobs) {
             int length = blob.getOuterContour().npoints / 2;
             if (length > minLength) {
@@ -109,7 +108,7 @@ public class Preprocessor {
         Map<Point, Blob> centroids = new HashMap<Point, Blob>();
         List<Blob> dottedLineBlobs = new ArrayList<Blob>();
         List<Line> result = new ArrayList<Line>();
-        int dottedLineMaxBlobSize = Constants.DOTTED_LINE_BLOB_SIZE;
+        int dottedLineMaxBlobSize = FeatureConstants.DOTTED_LINE_BLOB_SIZE;
 
         for (Blob blob : inputBlobs) {
             if (blob.getEnclosedArea() < dottedLineMaxBlobSize) {
@@ -140,8 +139,8 @@ public class Preprocessor {
     private List<Blob> buildLine(Blob blob, Map<Point, Blob> centroids, List<Blob> alreadyUsedBlobs) {
         List<Blob> result = new ArrayList<Blob>();
         Blob neighbor = this.findNearestBlobByCentroid(blob, centroids);
-        int dottedLineConeAngle = Constants.DOTTED_LINE_CONE_ANGLE;
-        int dottedLineConeLength = Constants.DOTTED_LINE_CONE_LENGTH;
+        int dottedLineConeAngle = FeatureConstants.DOTTED_LINE_CONE_ANGLE;
+        int dottedLineConeLength = FeatureConstants.DOTTED_LINE_CONE_LENGTH;
 
         result.add(blob);
         result.add(neighbor);
