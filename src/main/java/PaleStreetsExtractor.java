@@ -1,11 +1,7 @@
 import Util.Preprocessor;
-import Util.ResultsTableSelectionDrawer;
 import blob.Blob;
 import blob.FeatureEvaluator;
 import blob.ManyBlobs;
-import com.sun.org.apache.xalan.internal.utils.FeatureManager;
-import com.sun.tools.jdeps.Analyzer;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.measure.ResultsTable;
@@ -14,7 +10,7 @@ import ij.process.ImageProcessor;
 public class PaleStreetsExtractor implements StreetsExtractor {
 
     private final ImagePlus _cannyImage;
-    private final FeatureEvaluator _evaluator;
+    //private final FeatureEvaluator _evaluator;
 
     private ImagePlus combinedImage;
 
@@ -60,11 +56,11 @@ public class PaleStreetsExtractor implements StreetsExtractor {
 
         //IJ.getTextPanel().addMouseListener(new ResultsTableSelectionDrawer(preprocessedImage, preprocessedBlobs, rt));
 
-        _evaluator = new FeatureEvaluator(preprocessedBlobs, _cannyImage.getWidth(), _cannyImage.getHeight());
+        //_evaluator = new FeatureEvaluator(preprocessedBlobs, _cannyImage.getWidth(), _cannyImage.getHeight());
     }
 
     public ImagePlus process() {
-        return _evaluator.getEvaluatedResult();
+        //return _evaluator.evaluate();
+        return null;
     }
-
 }

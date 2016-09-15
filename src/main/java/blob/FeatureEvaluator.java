@@ -14,32 +14,67 @@ import java.util.Map;
 public class FeatureEvaluator {
 
     private final ManyBlobs _inputBlobs;
-    private final int _width;
-    private final int _height;
+    private ImageProcessor _resultProcessor;
 
-    EvaluationValues _lengthValues;
-    EvaluationValues _clusteringValues;
-    EvaluationValues _parallelCoverageValues;
-    EvaluationValues _lineFollowingValues;
+    private EvaluationValues _lengthValues;
+    private EvaluationValues _clusteringValues;
+    private EvaluationValues _parallelCoverageValues;
+    private EvaluationValues _lineFollowingValues;
 
-    private int _weightSum;
     private double _threshold;
 
-    public FeatureEvaluator(ManyBlobs blobs, int width, int height) {
+    public FeatureEvaluator(ManyBlobs blobs, ImageProcessor resultProcessor) {
         _inputBlobs = blobs;
-        _width = width;
-        _height = height;
+        _resultProcessor = resultProcessor;
 
         _lengthValues = EvaluationConstants.lengthValues;
         _clusteringValues = EvaluationConstants.clusteringValues;
         _parallelCoverageValues = EvaluationConstants.parallelCoverageValues;
         _lineFollowingValues = EvaluationConstants.lineFollowingValues;
-
-        _weightSum = _lengthValues.WEIGHT + _clusteringValues.WEIGHT + _parallelCoverageValues.WEIGHT + _lineFollowingValues.WEIGHT;
         _threshold = EvaluationConstants.THRESHOLD;
     }
 
-    public ImagePlus getEvaluatedResult() {
+    public EvaluationValues getLengthValues() {
+        return _lengthValues;
+    }
+
+    public EvaluationValues getClusteringValues() {
+        return _clusteringValues;
+    }
+
+    public EvaluationValues getParallelCoverageValues() {
+        return _parallelCoverageValues;
+    }
+
+    public EvaluationValues getLineFollowingValues() {
+        return _lineFollowingValues;
+    }
+
+    public double getThreshold() {
+        return _threshold;
+    }
+
+    public void setLengthValues(EvaluationValues _lengthValues) {
+        this._lengthValues = _lengthValues;
+    }
+
+    public void setClusteringValues(EvaluationValues _clusteringValues) {
+        this._clusteringValues = _clusteringValues;
+    }
+
+    public void setParallelCoverageValues(EvaluationValues _parallelCoverageValues) {
+        this._parallelCoverageValues = _parallelCoverageValues;
+    }
+
+    public void setLineFollowingValues(EvaluationValues _lineFollowingValues) {
+        this._lineFollowingValues = _lineFollowingValues;
+    }
+
+    public void setThreshold(double _threshold) {
+        this._threshold = _threshold;
+    }
+
+    public void evaluate() {
         Map<Blob, Double> lengthGrades = this.evaluateLength();
         Map<Blob, Double> clusteringGrades = this.evalauteClusteringResults();
         Map<Blob, Double> parallelCoverageGrades = this.evaluateParallelCoverage();
@@ -49,13 +84,19 @@ public class FeatureEvaluator {
 
         List<Blob> resultBlobs = this.evaluateOverallResult(overallGrades);
 
-        ImagePlus resultImage = NewImage.createByteImage("result image", _width, _height, 1, 4);
-        ImageProcessor resultProcessor = resultImage.getProcessor();
-        for (Blob blob : resultBlobs) {
-            blob.draw(resultProcessor);
+        int width = _resultProcessor.getWidth();
+        int height = _resultProcessor.getHeight();
+        byte[] pixels = (byte[]) _resultProcessor.getPixels();
+
+        for (int x = 0; x < width - 1; x++) {
+            for (int y = 0; y < height - 1; y++) {
+                pixels[y * width + x] = (byte)255;
+            }
         }
 
-        return resultImage;
+        for (Blob blob : resultBlobs) {
+            blob.draw(_resultProcessor);
+        }
     }
 
     private Map<Blob, Double> evaluateLength() {
@@ -146,7 +187,8 @@ public class FeatureEvaluator {
             parallelCoverageGrade *= _parallelCoverageValues.WEIGHT;
             lineFollowingGrade *= _lineFollowingValues.WEIGHT;
 
-            double overAllGrade = (lengthGrade + clusteringGrade + parallelCoverageGrade + lineFollowingGrade) / _weightSum;
+            int weightSum = _lengthValues.WEIGHT + _clusteringValues.WEIGHT + _parallelCoverageValues.WEIGHT + _lineFollowingValues.WEIGHT;
+            double overAllGrade = (lengthGrade + clusteringGrade + parallelCoverageGrade + lineFollowingGrade) / weightSum;
             result.put(blob, overAllGrade);
         }
 
