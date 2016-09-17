@@ -147,9 +147,10 @@ class FeatureCalculator {
                     int[] contourX = lastBlobAdded.getLineX();
                     int[] contourY = lastBlobAdded.getLineY();
                     int end = lastBlobAdded.getLength();
+                    int sampleRate = end >= lineFollowingSampleRate ? lineFollowingSampleRate : end;
 
-                    int x1 = foundFirstPoint ? contourX[end - lineFollowingSampleRate] : contourX[lineFollowingSampleRate];
-                    int y1 = foundFirstPoint ? contourY[end - lineFollowingSampleRate] : contourY[lineFollowingSampleRate];
+                    int x1 = foundFirstPoint ? contourX[end - sampleRate] : contourX[sampleRate];
+                    int y1 = foundFirstPoint ? contourY[end - sampleRate] : contourY[sampleRate];
                     int startX = foundFirstPoint ? contourX[end] : contourX[0];
                     int startY = foundFirstPoint ? contourY[end] : contourY[0];
                     double baseAngle = Utils.getAngle(x1, startX, y1, startY);
@@ -195,9 +196,11 @@ class FeatureCalculator {
                 int[] contourX = candidate.getLineX();
                 int[] contourY = candidate.getLineY();
                 int end = candidate.getLength();
+                int sampleRate = end >= lineFollowingSampleRate ? lineFollowingSampleRate : end;
+
                 double angle = lookForFirstPoint
-                        ? Utils.getAngle(contourX[0], contourX[lineFollowingSampleRate], contourY[0], contourY[lineFollowingSampleRate])
-                        : Utils.getAngle(contourX[end], contourX[end - lineFollowingSampleRate], contourY[end], contourY[end - lineFollowingSampleRate]);
+                        ? Utils.getAngle(contourX[0], contourX[sampleRate], contourY[0], contourY[sampleRate])
+                        : Utils.getAngle(contourX[end], contourX[end - sampleRate], contourY[end], contourY[end - sampleRate]);
 
                 if (Utils.getAngleDiff(baseAngle, angle) < (double) maxAngleDiffCones) {
                     return candidate;

@@ -1,22 +1,21 @@
-import Util.EvaluationConstants;
-import Util.EvaluationValues;
-import Util.Preprocessor;
-import Util.Utils;
+import Util.*;
 import blob.Blob;
 import blob.FeatureEvaluator;
 import blob.ManyBlobs;
-import ij.IJ;
-import ij.ImageJ;
-import ij.ImageListener;
-import ij.ImagePlus;
+import ij.*;
+import ij.gui.DialogListener;
+import ij.gui.GenericDialog;
 import ij.gui.NewImage;
 import ij.gui.NonBlockingGenericDialog;
 import ij.measure.ResultsTable;
 import ij.plugin.EventListener;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.KeyListener;
 
 public class Extract_Streets implements PlugInFilter {
     private ImagePlus _image;
@@ -32,39 +31,29 @@ public class Extract_Streets implements PlugInFilter {
     }
 
     public void run(ImageProcessor ip) {
-        // 1 cut off high curvature parts
-        // 2 remove super short lines
-        // 3 calculate dotted lines for the calculation of parallel coverage
         Preprocessor preprocessor = new Preprocessor(_image);
         ManyBlobs preprocessedBlobs = preprocessor.process();
+        preprocessedBlobs.computeFeatures();
 
-        Utils.printBlobsToCSV(preprocessedBlobs);
+        ResultsTable rt = new ResultsTable();
+        for (Blob blob : preprocessedBlobs) {
+            rt.incrementCounter();
 
-        //preprocessedBlobs.computeFeatures();
+            rt.addValue("Length", blob.getLength());
+            rt.addValue("isInCluster", String.valueOf(blob.isInCluster()));
+            rt.addValue("Parallel Coverage", blob.getParallelCoverage());
+            rt.addValue("Line Following segments", blob.getLineFollowingElements());
+        }
+        rt.show("Features");
 
-//        // 1 show features of each blob in ResultsTable
-//        ResultsTable rt = new ResultsTable();
-//        for (Blob blob : preprocessedBlobs) {
-//            rt.incrementCounter();
-//
-//            //rt.addValue("Index", rt.getCounter());
-//            rt.addValue("Length", blob.getLength());
-//            rt.addValue("isInCluster", String.valueOf(blob.isInCluster()));
-//            rt.addValue("Parallel Coverage", blob.getParallelCoverage());
-//            rt.addValue("Line Following segments", blob.getLineFollowingElements());
-//        }
-//        rt.show("Features");
-//
-//        //IJ.getTextPanel().addMouseListener(new ResultsTableSelectionDrawer(preprocessedImage, preprocessedBlobs, rt));
-//
-//        _resultImage = NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4);
-//        _resultImage.show();
-//
-//        _evaluator = new FeatureEvaluator(preprocessedBlobs, _resultImage.getProcessor());
+        _resultImage = NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4);
+        _resultImage.show();
+
+        _evaluator = new FeatureEvaluator(preprocessedBlobs, _resultImage.getProcessor());
 
         IJ.run("Images to Stack", "name=Stack title=[] use");
 
-        //this.showDialog();
+        this.showDialog();
     }
 
     private void showDialog() {
@@ -90,24 +79,40 @@ public class Extract_Streets implements PlugInFilter {
 
         dialog.addPanel(new Panel());
         dialog.addNumericField("Overall Threshold", EvaluationConstants.THRESHOLD, 1);
+        dialog.addCheckbox("Calculate preview", true);
+
+        DialogListener listener = new DialogListener() {
+            @Override
+            public boolean dialogItemChanged(GenericDialog dialog, AWTEvent awtEvent) {
+                if (awtEvent instanceof  ItemEvent) {
+                    ItemEvent event = (ItemEvent) awtEvent;
+                    if (event.getItem().equals("Calculate preview") && event.getStateChange() == 1) {
+                        EvaluationValues lengthValues = new EvaluationValues(dialog.getNextNumber(), dialog.getNextNumber(), (int) dialog.getNextNumber());
+                        EvaluationValues clusteringValues = new EvaluationValues(0, 0, (int) dialog.getNextNumber());
+                        EvaluationValues parallelCoverageValues = new EvaluationValues(dialog.getNextNumber(), dialog.getNextNumber(), (int) dialog.getNextNumber());
+                        EvaluationValues lineFollowingValues = new EvaluationValues(dialog.getNextNumber(), dialog.getNextNumber(), (int) dialog.getNextNumber());
+                        double threshold = dialog.getNextNumber();
+
+                        _evaluator.setLengthValues(lengthValues);
+                        _evaluator.setClusteringValues(clusteringValues);
+                        _evaluator.setParallelCoverageValues(parallelCoverageValues);
+                        _evaluator.setLineFollowingValues(lineFollowingValues);
+                        _evaluator.setThreshold(threshold);
+
+                        _evaluator.evaluate();
+                        _resultImage.updateAndDraw();
+                    }
+                }
+                return true;
+            }
+        };
+        dialog.addDialogListener(listener);
 
         dialog.showDialog();
+    }
 
-        if (!dialog.wasCanceled()) {EvaluationValues lengthValues = new EvaluationValues(dialog.getNextNumber(), dialog.getNextNumber(), (int) dialog.getNextNumber());
-            EvaluationValues clusteringValues = new EvaluationValues(0, 0, (int) dialog.getNextNumber());
-            EvaluationValues parallelCoverageValues = new EvaluationValues(dialog.getNextNumber(), dialog.getNextNumber(), (int) dialog.getNextNumber());
-            EvaluationValues lineFollowingValues = new EvaluationValues(dialog.getNextNumber(), dialog.getNextNumber(), (int) dialog.getNextNumber());
-            double threshold = dialog.getNextNumber();
+    private void calculateResult() {
 
-            _evaluator.setLengthValues( lengthValues);
-            _evaluator.setClusteringValues(clusteringValues);
-            _evaluator.setParallelCoverageValues(parallelCoverageValues);
-            _evaluator.setLineFollowingValues(lineFollowingValues);
-            _evaluator.setThreshold(threshold);
-
-            _evaluator.evaluate();
-            _resultImage.updateAndDraw();
-        }
     }
 
 //    public void run(ImageProcessor ip) {

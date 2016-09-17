@@ -20,7 +20,6 @@ public interface FeatureConstants {
 
     int DOTTED_LINE_MIN_LENGTH = 2;
     int DOTTED_LINE_MAX_LENGTH = 20;
-    int DOTTED_LINE_MIN_ASPECT_RATIO = 2;
     int DOTTED_LINE_CONE_ANGLE = 10;
     int DOTTED_LINE_CONE_LENGTH = 60;
     int MIN_STREET_WIDTH = 5;

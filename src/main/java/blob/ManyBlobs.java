@@ -82,6 +82,4 @@ public class ManyBlobs extends ArrayList<Blob> {
 		FeatureCalculator calculator = new FeatureCalculator(this, _binaryImage);
 		calculator.calculateFeatures();
 	}
-
-
 }

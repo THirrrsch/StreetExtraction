@@ -127,6 +127,7 @@ public class Preprocessor {
         longLineImage.show();
         longLineImage.updateAndDraw();
 
+        result.setBinaryImage(longLineImage);
         result.createLineOrdering();
         return result;
     }
