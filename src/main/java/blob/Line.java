@@ -44,17 +44,19 @@ public class Line {
             Point centroidA = lineBlobs.get(i).getCentroid();
             Point centroidB = lineBlobs.get(i + 1).getCentroid();
 
-            _points.addAll(Utils.getBresenhamPoints(centroidA.x, centroidA.y, centroidB.x, centroidB.y));
+            _points.addAll(Utils.getBresenhamPoints8Connected(centroidA.x, centroidA.y, centroidB.x, centroidB.y));
         }
 
-        _angle = Utils.getAngle(_points.get(0).x, _points.get(_points.size()-1).x, _points.get(0).y, _points.get(_points.size() - 1).y);
+        _angle = Utils.getAngle(_points.get(0).x, _points.get(_points.size() - 1).x, _points.get(0).y, _points.get(_points.size() - 1).y);
     }
 
     public void draw(ImageProcessor parallelProcessor) {
         int width = parallelProcessor.getWidth();
+        int height = parallelProcessor.getHeight();
         byte[] pixels = (byte[]) parallelProcessor.getPixels();
         for (Point p : _points) {
-            pixels[p.y * width + p.x] = 0;
+            if (p.x >= 0 && p.x < width - 1 && p.y >= 0 && p.y < height - 1)
+                pixels[p.y * width + p.x] = 0;
         }
     }
 

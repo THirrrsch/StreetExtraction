@@ -15,44 +15,63 @@ import java.util.Map;
 
 public class Preprocessor {
 
-    private ManyBlobs _rawBlobs;
-    private ManyBlobs _processedBlobs;
-    private ImagePlus _binaryImage;
+    private ImagePlus _inputImage;
     private int _width;
     private int _height;
 
-    public Preprocessor(ManyBlobs blobs, ImagePlus binaryImage) {
-        _rawBlobs = blobs;
-        _binaryImage = binaryImage;
-        _width = _binaryImage.getWidth();
-        _height = _binaryImage.getHeight();
+    public Preprocessor(ImagePlus binaryImage) {
+        _inputImage = binaryImage;
+        _width = _inputImage.getWidth();
+        _height = _inputImage.getHeight();
     }
 
-    public void process() {
-        ManyBlobs tmpBlobs = this.getStraightLineBlobs(_rawBlobs);
-        _processedBlobs = this.getLongBlobs(tmpBlobs);
+    public ManyBlobs process() {
+        ManyBlobs inputBlobs = this.getInitialBlobs();
+        ManyBlobs straightLineBlobs = this.getStraightLineBlobs(inputBlobs);
+        ManyBlobs result = this.removeShortLines(straightLineBlobs);
 
-        List<Line> dottedLines = this.getDottedLines(_rawBlobs);
-        _processedBlobs.setDottedLines(dottedLines);
-        _processedBlobs.setBinaryImage(_rawBlobs.getBinaryImage());
+        List<Line> dottedLines = this.getDottedLines(inputBlobs);
+        result.setDottedLines(dottedLines);
+
+        return result;
     }
 
-    public ManyBlobs getProcessedBlobs() {
-        return _processedBlobs;
+    // removes crosses
+    private ManyBlobs getInitialBlobs() {
+        ImagePlus outputImage = NewImage.createByteImage("straight line image 1", _width, _height, 1, 4);
+
+        byte[] inputPixels = (byte[]) _inputImage.getProcessor().getPixels();
+        byte[] outputPixels = (byte[]) outputImage.getProcessor().getPixels();
+
+        for (int x = 0; x < _width - 1; x++) {
+            for (int y = 0; y < _height - 1; y++) {
+                int index = y * _width + x;
+                if (inputPixels[index] == 0) {
+                    if (this.getNeighborCount(x, y, inputPixels) > 2) {
+                        outputPixels[index] = (byte) 255;
+                    } else {
+                        outputPixels[index] = 0;
+                    }
+                } else {
+                    outputPixels[index] = (byte) 255;
+                }
+            }
+        }
+
+        ManyBlobs result = new ManyBlobs(outputImage);
+        result.findConnectedComponents();
+
+        return result;
     }
 
     private ManyBlobs getStraightLineBlobs(ManyBlobs inputBlobs) {
         double angleCurrent = 0;
         double angleOld;
         double angleDiff;
-        int width = inputBlobs.getBinaryImage().getWidth();
-        int height = inputBlobs.getBinaryImage().getHeight();
         int sampleRate = FeatureConstants.SAMPLE_RATE;
         int maxAngleDiff = FeatureConstants.MAX_ANGLE_DIFF;
-
-        ImagePlus straightLineImage = NewImage.createByteImage("straight line image", width, height, 1, 4);
-        ImageProcessor straightLineProcessor = straightLineImage.getProcessor();
-        byte[] straightLinePixels = (byte[]) straightLineProcessor.getPixels();
+        ImagePlus straightLineImage = NewImage.createByteImage("straight line image", _width, _height, 1, 4);
+        byte[] straightLinePixels = (byte[]) straightLineImage.getProcessor().getPixels();
 
         for (Blob blob : inputBlobs) {
             if (blob.getOuterContour().npoints >= sampleRate) {
@@ -60,22 +79,22 @@ public class Preprocessor {
                 int[] contourY = blob.getOuterContour().ypoints;
                 int max = blob.getOuterContour().npoints - sampleRate;
 
-                for(int i = 0; i < max; i += sampleRate) {
+                for (int i = 0; i < max; i += sampleRate) {
                     int startX = contourX[i];
                     int startY = contourY[i];
                     int endX = contourX[i + sampleRate];
                     int endY = contourY[i + sampleRate];
 
-                    if(i == 0) {
+                    if (i == 0) {
                         angleCurrent = Utils.getAngle(startX, endX, startY, endY);
                     } else {
                         angleOld = angleCurrent;
                         angleCurrent = Utils.getAngle(startX, endX, startY, endY);
                         angleDiff = Utils.getAngleDiff(angleCurrent, angleOld);
 
-                        if(angleDiff < maxAngleDiff) {
-                            for(int j = 0; j < sampleRate; ++j) {
-                                straightLinePixels[contourY[i + j] * width + contourX[i + j]] = 0;
+                        if (angleDiff < maxAngleDiff) {
+                            for (int j = 0; j < sampleRate; ++j) {
+                                straightLinePixels[contourY[i + j] * _width + contourX[i + j]] = 0;
                             }
                         }
                     }
@@ -83,23 +102,52 @@ public class Preprocessor {
             }
         }
 
-        straightLineImage.updateImage();
         ManyBlobs result = new ManyBlobs(straightLineImage);
         result.findConnectedComponents();
+
         return result;
     }
 
-    private ManyBlobs getLongBlobs(ManyBlobs inputBlobs) {
+    private ManyBlobs removeShortLines(ManyBlobs inputBlobs) {
+        ImagePlus longLineImage = NewImage.createByteImage("preprocessed image", _width, _height, 1, 4);
+        ImageProcessor longLineProcessor = longLineImage.getProcessor();
+        int _minContourLength = FeatureConstants.MIN_CONTOUR_LENGTH;
+
         ManyBlobs result = new ManyBlobs();
-        int minLength = FeatureConstants.MIN_CONTOUR_LENGTH;
+
         for (Blob blob : inputBlobs) {
             int length = blob.getOuterContour().npoints / 2;
-            if (length > minLength) {
-                blob.setLength(length);
+            if (length >= _minContourLength) {
+                blob.draw(longLineProcessor);
                 result.add(blob);
+                blob.setLength(length);
             }
         }
+
+        longLineImage.show();
+        longLineImage.updateAndDraw();
+
         result.createLineOrdering();
+        return result;
+    }
+
+    private int getNeighborCount(int x, int y, byte[] pixels) {
+        int result = 0;
+        int newX;
+        int newY;
+
+        for (int i = -1; i < 2; i++) {
+            for (int j = -1; j < 2; j++) {
+                if (i != 0 || j != 0) {
+                    newX = x + i;
+                    newY = y + j;
+                    if (this.isInImageRange(newX, newY) && pixels[newY * _width + newX] == 0) {
+                        result++;
+                    }
+                }
+            }
+        }
+
         return result;
     }
 
@@ -108,13 +156,26 @@ public class Preprocessor {
         Map<Point, Blob> centroids = new HashMap<Point, Blob>();
         List<Blob> dottedLineBlobs = new ArrayList<Blob>();
         List<Line> result = new ArrayList<Line>();
-        int dottedLineMaxBlobSize = FeatureConstants.DOTTED_LINE_BLOB_SIZE;
+        int dottedLineMinLength = FeatureConstants.DOTTED_LINE_MIN_LENGTH;
+        int dottedLineMaxLength = FeatureConstants.DOTTED_LINE_MAX_LENGTH;
+
+//        ImagePlus centroidImage = NewImage.createByteImage("centroid image", _width, _height, 1, 4);
+//        ImageProcessor centroidProcessor = centroidImage.getProcessor();
+//
+//        ImagePlus parallelImage = NewImage.createByteImage("centroid image", _width, _height, 1, 4);
+//        ImageProcessor parallelProcessor = centroidImage.getProcessor();
 
         for (Blob blob : inputBlobs) {
-            if (blob.getEnclosedArea() < dottedLineMaxBlobSize) {
+            int length = blob.getOuterContour().npoints / 2;
+            if (length > dottedLineMinLength && length <= dottedLineMaxLength) {
                 Point centroid = blob.getCentroid();
                 smallBlobs.add(blob);
                 centroids.put(centroid, blob);
+
+                //blob.drawCentroid(centroidProcessor);
+            } else {
+                //blob.draw(centroidProcessor);
+                //blob.draw(parallelProcessor);
             }
         }
 
@@ -125,13 +186,20 @@ public class Preprocessor {
         // TODO re-use already used centroids or not?
         for (Blob blob : smallBlobs) {
             //if (!dottedLineBlobs.contains(blob)) {   // if yes, comment
-                List<Blob> currentLineBlobs = this.buildLine(blob, centroids, dottedLineBlobs);
-                if (currentLineBlobs.size() > 2) {
-                    //dottedLineBlobs.addAll(currentLineBlobs);  // if yes, comment
-                    result.add(new Line(currentLineBlobs));
-                }
+            List<Blob> currentLineBlobs = this.buildLine(blob, centroids, dottedLineBlobs);
+            if (currentLineBlobs.size() > 2) {
+                //dottedLineBlobs.addAll(currentLineBlobs);  // if yes, comment
+                Line line = new Line(currentLineBlobs);
+                result.add(line);
+                //line.draw(parallelProcessor);
+            }
             //}  // if yes, comment
         }
+
+//        centroidImage.show();
+//        centroidImage.updateAndDraw();
+//        parallelImage.show();
+//        parallelImage.updateAndDraw();
 
         return result;
     }
@@ -158,12 +226,12 @@ public class Preprocessor {
                 offset = 0;
                 baseAngle = Utils.getAngle(startCentroid.x, endCentroid.x, startCentroid.y, endCentroid.y);
 
-                while(offset < dottedLineConeAngle) {
+                while (offset < dottedLineConeAngle) {
                     double currentAngle = baseAngle + (double) offset;
                     double currentAngleRAD = Math.PI * currentAngle / 180;
                     int endX = (int) (endCentroid.getX() + (dottedLineConeLength * Math.cos(currentAngleRAD)));
-                    int endY = (int) ( endCentroid.getY() +  (dottedLineConeLength* Math.sin(currentAngleRAD)));
-                    List<Point> points = Utils.getBresenhamPoints(endCentroid.x, endCentroid.y, endX, endY);
+                    int endY = (int) (endCentroid.getY() + (dottedLineConeLength * Math.sin(currentAngleRAD)));
+                    List<Point> points = Utils.getBresenhamPoints4Connected(endCentroid.x, endCentroid.y, endX, endY);
 
                     for (Point p : points) {
                         if (this.isInImageRange(p.x, p.y) && centroids.containsKey(p)) {

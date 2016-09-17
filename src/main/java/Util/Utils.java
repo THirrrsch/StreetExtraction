@@ -15,7 +15,7 @@ public class Utils {
     private Utils() {
     }
 
-    public static List<Point> getBresenhamPoints(int x1, int y1, int x2, int y2) {
+    public static List<Point> getBresenhamPoints8Connected(int x1, int y1, int x2, int y2) {
         List<Point> result = new ArrayList<Point>();
         byte xIncrement = 1;
         byte yIncrement = 1;
@@ -61,30 +61,42 @@ public class Utils {
             }
         }
 
-        List<Point> fourConnectedResult = new ArrayList<Point>();
+        if (result.size() > 0) {
+            if (result.get(0).x == x1 && result.get(0).y == y1) {
+                result.remove(0);
+            }
+        }
 
-        for(int i = 0; i < result.size() - 1; ++i) {
-            Point current = result.get(i);
-            Point next = result.get(i + 1);
-            fourConnectedResult.add(current);
+        return result;
+    }
+
+    public static List<Point> getBresenhamPoints4Connected(int x1, int y1, int x2, int y2) {
+        List<Point> eightConnectedResult = getBresenhamPoints8Connected(x1, y1, x2, y2);
+
+        List<Point> result = new ArrayList<Point>();
+
+        for(int i = 0; i < eightConnectedResult.size() - 1; ++i) {
+            Point current = eightConnectedResult.get(i);
+            Point next = eightConnectedResult.get(i + 1);
+            result.add(current);
             if(next.x != current.x && next.y != current.y) {
                 if((next.x >= current.x || next.y <= current.y) && (next.x <= current.x || next.y >= current.y)) {
-                    fourConnectedResult.add(new Point(next.x, current.y));
+                    result.add(new Point(next.x, current.y));
                 } else {
-                    fourConnectedResult.add(new Point(current.x, next.y));
+                    result.add(new Point(current.x, next.y));
                 }
             }
 
-            fourConnectedResult.add(next);
+            result.add(next);
         }
 
-        if (fourConnectedResult.size() > 0) {
-            if (fourConnectedResult.get(0).x == x1 && fourConnectedResult.get(0).y == y1) {
-                fourConnectedResult.remove(0);
+        if (result.size() > 0) {
+            if (result.get(0).x == x1 && result.get(0).y == y1) {
+                result.remove(0);
             }
         }
 
-        return fourConnectedResult;
+        return result;
     }
 
     public static void drawCentroidLine(List<Blob> currentLineBlobs, ImageProcessor processor) {

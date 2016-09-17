@@ -92,8 +92,8 @@ class FeatureCalculator {
                 int baseX = contourX[i + sampleRate / 2];
                 int baseY = contourY[i + sampleRate / 2];
 
-                List<Point> pointsClock = Utils.getBresenhamPoints(baseX + vecXStart, baseY + vecYStart, baseX + vecXEnd, baseY + vecYEnd);
-                List<Point> pointsCounterclock = Utils.getBresenhamPoints(baseX - vecXStart, baseY - vecYStart, baseX - vecXEnd, baseY - vecYEnd);
+                List<Point> pointsClock = Utils.getBresenhamPoints4Connected(baseX + vecXStart, baseY + vecYStart, baseX + vecXEnd, baseY + vecYEnd);
+                List<Point> pointsCounterclock = Utils.getBresenhamPoints4Connected(baseX - vecXStart, baseY - vecYStart, baseX - vecXEnd, baseY - vecYEnd);
 
                 if (this.doesParallelLineExist(currentAngle, pointsClock, mapper)) {
                     parallelCountClock++;
@@ -160,7 +160,7 @@ class FeatureCalculator {
                         double currentAngleRAD = Math.PI * currentAngle / 180;
                         int endX = (int) ((double) startX + (double) coneLength * Math.cos(currentAngleRAD));
                         int endY = (int) ((double) startY + (double) coneLength * Math.sin(currentAngleRAD));
-                        List<Point> points = Utils.getBresenhamPoints(startX, startY, endX, endY);
+                        List<Point> points = Utils.getBresenhamPoints4Connected(startX, startY, endX, endY);
 
                         lastBlobAdded = this.getLineFollowingBlob(baseAngle, points, mapper, true);
                         if (lastBlobAdded != null) {

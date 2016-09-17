@@ -1,6 +1,7 @@
 import Util.EvaluationConstants;
 import Util.EvaluationValues;
 import Util.Preprocessor;
+import Util.Utils;
 import blob.Blob;
 import blob.FeatureEvaluator;
 import blob.ManyBlobs;
@@ -31,70 +32,39 @@ public class Extract_Streets implements PlugInFilter {
     }
 
     public void run(ImageProcessor ip) {
-        // find initial blobs
-        ManyBlobs rawBlobs = new ManyBlobs(_image);
-        rawBlobs.findConnectedComponents();
-
         // 1 cut off high curvature parts
         // 2 remove super short lines
         // 3 calculate dotted lines for the calculation of parallel coverage
-        Preprocessor preprocessor = new Preprocessor(rawBlobs, _image);
-        preprocessor.process();
+        Preprocessor preprocessor = new Preprocessor(_image);
+        ManyBlobs preprocessedBlobs = preprocessor.process();
 
-        ImagePlus preprocessedImage = NewImage.createByteImage("preprocessed image", _image.getWidth(), _image.getHeight(), 1, 4);
-        ImageProcessor preprocessedProcessor = preprocessedImage.getProcessor();
+        Utils.printBlobsToCSV(preprocessedBlobs);
 
-        // 1 get the (preprocessed) blobs to work with
-        // 2 draw them on a new image
-        // 3 calculate necessary features
-        ManyBlobs preprocessedBlobs = preprocessor.getProcessedBlobs();
-        for (Blob blob : preprocessedBlobs) {
-            blob.draw(preprocessedProcessor);
-        }
-        preprocessedImage.show();
-        preprocessedImage.updateAndDraw();
-        preprocessedBlobs.computeFeatures();
+        //preprocessedBlobs.computeFeatures();
 
-        // 1 show features of each blob in ResultsTable
-        ResultsTable rt = new ResultsTable();
-        for (Blob blob : preprocessedBlobs) {
-            rt.incrementCounter();
+//        // 1 show features of each blob in ResultsTable
+//        ResultsTable rt = new ResultsTable();
+//        for (Blob blob : preprocessedBlobs) {
+//            rt.incrementCounter();
+//
+//            //rt.addValue("Index", rt.getCounter());
+//            rt.addValue("Length", blob.getLength());
+//            rt.addValue("isInCluster", String.valueOf(blob.isInCluster()));
+//            rt.addValue("Parallel Coverage", blob.getParallelCoverage());
+//            rt.addValue("Line Following segments", blob.getLineFollowingElements());
+//        }
+//        rt.show("Features");
+//
+//        //IJ.getTextPanel().addMouseListener(new ResultsTableSelectionDrawer(preprocessedImage, preprocessedBlobs, rt));
+//
+//        _resultImage = NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4);
+//        _resultImage.show();
+//
+//        _evaluator = new FeatureEvaluator(preprocessedBlobs, _resultImage.getProcessor());
 
-            //rt.addValue("Index", rt.getCounter());
-            rt.addValue("Length", blob.getLength());
-            rt.addValue("isInCluster", String.valueOf(blob.isInCluster()));
-            rt.addValue("Parallel Coverage", blob.getParallelCoverage());
-            rt.addValue("Line Following segments", blob.getLineFollowingElements());
-        }
-        rt.show("Features");
+        IJ.run("Images to Stack", "name=Stack title=[] use");
 
-        //IJ.getTextPanel().addMouseListener(new ResultsTableSelectionDrawer(preprocessedImage, preprocessedBlobs, rt));
-
-        _resultImage = NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4);
-        _resultImage.show();
-
-        _evaluator = new FeatureEvaluator(preprocessedBlobs, _resultImage.getProcessor());
-
-        //IJ.run("Images to Stack", "name=Stack title=[] use");
-
-        this.showDialog();
-
-        _resultImage.addImageListener(new ImageListener() {
-            @Override
-            public void imageOpened(ImagePlus imagePlus) {
-
-            }
-
-            @Override
-            public void imageClosed(ImagePlus imagePlus) {
-
-            }
-
-            @Override
-            public void imageUpdated(ImagePlus imagePlus) {
-                showDialog();
-            }
-        });
+        //this.showDialog();
     }
 
     private void showDialog() {
@@ -181,7 +151,8 @@ public class Extract_Streets implements PlugInFilter {
         String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
         System.setProperty("plugins.dir", pluginsDir);
         new ImageJ();
-        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
+        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test.png");
+        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
         //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\test.png");
         image.show();
         IJ.runPlugIn(clazz.getName(), "");

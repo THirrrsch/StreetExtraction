@@ -55,6 +55,9 @@ public class Blob {
 	private int lineFollowingElements = -1;
 
 	public int getLength() {
+		if (length == -1) {
+			length = getOuterContour().npoints / 2;
+		}
 		return length;
 	}
 
@@ -276,7 +279,35 @@ public class Blob {
 		return innerContours.size();
 	}
 
-	public Point[] getMinimumBoundingRectangle(){
+	public double getAspectRatio(){
+		return getLongSideMBR()/getShortSideMBR();
+	}
+
+	public double getLongSideMBR(){
+		Point[] mbr = getMinimumBoundingRectangle();
+
+		if(mbr == null){
+			return Double.NaN;
+		}
+
+		double firstSide = Math.sqrt(Math.pow(cal.getX(mbr[1].x) -cal.getX(mbr[0].x),2)+Math.pow(cal.getY(mbr[1].y) - cal.getY(mbr[0].y),2));
+		double secondSide = Math.sqrt(Math.pow(cal.getX(mbr[1].x) -cal.getX(mbr[2].x),2)+Math.pow(cal.getY(mbr[1].y) -cal.getY(mbr[2].y),2));
+
+		return firstSide>secondSide?firstSide:secondSide;
+	}
+
+	public double getShortSideMBR(){
+		Point[] mbr = getMinimumBoundingRectangle();
+		if(mbr == null){
+			return Double.NaN;
+		}
+		double firstSide = Math.sqrt(Math.pow(cal.getX(mbr[1].x) -cal.getX(mbr[0].x),2)+Math.pow(cal.getY(mbr[1].y) - cal.getY(mbr[0].y),2));
+		double secondSide = Math.sqrt(Math.pow(cal.getX(mbr[1].x) -cal.getX(mbr[2].x),2)+Math.pow(cal.getY(mbr[1].y) -cal.getY(mbr[2].y),2));
+
+		return firstSide<secondSide?firstSide:secondSide;
+	}
+
+	public Point[] getMinimumBoundingRectangle() {
 		int[] xp = new int[getOuterContour().npoints];
 		int[] yp = new int[getOuterContour().npoints];
 		for(int i = 0; i < getOuterContour().npoints; i++){

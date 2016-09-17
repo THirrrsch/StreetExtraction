@@ -4,7 +4,7 @@ public interface FeatureConstants {
     int SAMPLE_RATE = 5;
     int MAX_ANGLE_DIFF = 20;
 
-    int MIN_CONTOUR_LENGTH = 25;
+    int MIN_CONTOUR_LENGTH = 10;
 
     int DBSCAN_EPSILON = 4;
     int DBSCAN_MINPTS = 20;
@@ -18,7 +18,9 @@ public interface FeatureConstants {
     int MIN_BRIGHTNESS_PALE = 125;
     int MAX_BRIGHTNESS_PALE = 255;
 
-    int DOTTED_LINE_BLOB_SIZE = 50;
+    int DOTTED_LINE_MIN_LENGTH = 2;
+    int DOTTED_LINE_MAX_LENGTH = 20;
+    int DOTTED_LINE_MIN_ASPECT_RATIO = 2;
     int DOTTED_LINE_CONE_ANGLE = 10;
     int DOTTED_LINE_CONE_LENGTH = 60;
     int MIN_STREET_WIDTH = 5;

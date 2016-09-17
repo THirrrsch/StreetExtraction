@@ -24,8 +24,8 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         // 1 cut off high curvature parts
         // 2 remove super short lines
         // 3 calculate dotted lines for the calculation of parallel coverage
-        Preprocessor preprocessor = new Preprocessor(rawBlobs, _cannyImage);
-        preprocessor.process();
+        Preprocessor preprocessor = new Preprocessor(_cannyImage);
+        ManyBlobs preprocessedBlobs = preprocessor.process();
 
         ImagePlus preprocessedImage = NewImage.createByteImage("preprocessed image", _cannyImage.getWidth(), _cannyImage.getHeight(), 1, 4);
         ImageProcessor preprocessedProcessor = preprocessedImage.getProcessor();
@@ -33,7 +33,6 @@ public class PaleStreetsExtractor implements StreetsExtractor {
         // 1 get the (preprocessed) blobs to work with
         // 2 draw them on a new image
         // 3 calculate necessary features
-        ManyBlobs preprocessedBlobs = preprocessor.getProcessedBlobs();
         for (Blob blob : preprocessedBlobs) {
             blob.draw(preprocessedProcessor);
         }
