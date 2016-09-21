@@ -273,30 +273,29 @@ public class Preprocessor {
 
         while (true) {
             for (int j = -offset; j <= offset; j++) {
-                p.setLocation(x + j, y - offset);
-                if (this.isInImageRange(x + j, y - offset) && centroids.containsKey(p)) {
-                    return centroids.get(p);
-                }
-            }
-            for (int j = -offset; j <= offset; j++) {
-                p.setLocation(x + j, y + offset);
-                if (this.isInImageRange(x + j, y + offset) && centroids.containsKey(p)) {
-                    return centroids.get(p);
-                }
-            }
-            for (int j = -offset; j <= offset; j++) {
                 p.setLocation(x - offset, y + j);
-                if (this.isInImageRange(x - offset, y + j) && centroids.containsKey(p)) {
+                if (centroids.containsKey(p)) {
                     return centroids.get(p);
                 }
             }
             for (int j = -offset; j <= offset; j++) {
                 p.setLocation(x + offset, y + j);
-                if (this.isInImageRange(x + offset, y + j) && centroids.containsKey(p)) {
+                if (centroids.containsKey(p)) {
                     return centroids.get(p);
                 }
             }
-
+            for (int j = -offset; j <= offset; j++) {
+                p.setLocation(x + j, y - offset);
+                if (centroids.containsKey(p)) {
+                    return centroids.get(p);
+                }
+            }
+            for (int j = -offset; j <= offset; j++) {
+                p.setLocation(x + j, y + offset);
+                if (centroids.containsKey(p)) {
+                    return centroids.get(p);
+                }
+            }
             offset++;
         }
     }

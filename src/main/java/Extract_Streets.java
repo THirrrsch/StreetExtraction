@@ -6,10 +6,7 @@ import calculation.Preprocessor;
 import gui.ImageResultsTableSelector;
 import gui.StreetExtrationDialog;
 import ij.*;
-import ij.gui.DialogListener;
-import ij.gui.GenericDialog;
-import ij.gui.NewImage;
-import ij.gui.NonBlockingGenericDialog;
+import ij.gui.*;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
 import ij.plugin.filter.PlugInFilter;
@@ -33,18 +30,25 @@ public class Extract_Streets implements PlugInFilter {
         ManyBlobs preprocessedBlobs = preprocessor.process();
         preprocessedBlobs.computeFeatures();
 
-        this.fillFeatureTable(preprocessedBlobs);
-
         ImagePlus resultImage = NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4);
         resultImage.show();
-        //registerResultImage(resultImage);
+
+        ImageStack stack = _image.getStack();
+        stack.addSlice("result slice", resultImage.getProcessor());
+
+        ImagePlus stackedImage = new ImagePlus("Stack", stack);
+        stackedImage.show();
+        stackedImage.updateAndDraw();
+
+        this.fillFeatureTable(preprocessedBlobs);
+        resultImage.getCanvas().addMouseListener(new ImageResultsTableSelector(resultImage, preprocessedBlobs));
 
         FeatureEvaluator evaluator = new FeatureEvaluator(preprocessedBlobs, resultImage);
         StreetExtrationDialog dialog = new StreetExtrationDialog(evaluator);
 
         dialog.show();
 
-        IJ.run("Images to Stack", "name=Stack title=[] use");
+        //IJ.run("Images to Stack", "name=Stack title=[] use");
     }
 
     private void fillFeatureTable(ManyBlobs blobs) {
@@ -64,15 +68,6 @@ public class Extract_Streets implements PlugInFilter {
             rt.addValue("Line Following segments", blob.getLineFollowingElements());
         }
         rt.show("Results");
-    }
-
-    private void registerResultImage(ImagePlus resultImage){
-        Window window = WindowManager.getWindow(resultImage.getTitle());
-        ImagePlus image = WindowManager.getImage(resultImage.getTitle());
-        boolean windowIsVisible = (window!=null);
-        if(windowIsVisible){
-            window.getComponent(0).addMouseListener(new ImageResultsTableSelector(image));
-        }
     }
 
     public static void main(String[] args) {

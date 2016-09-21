@@ -1,86 +1,120 @@
 package gui;
 
 import blob.Blob;
+import blob.ManyBlobs;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.Overlay;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.plugin.filter.Analyzer;
 
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This class implements an listener for interactive select a blob in an image and the corresponding row in the results table.
  **/
 public class ImageResultsTableSelector implements MouseListener {
 
-    private ImagePlus imp;
+    private ImagePlus _image;
+    private ManyBlobs _blobs;
+    private Map<Point, Integer> _blobMap;
     public static boolean isParticleSelected;
-    public ImageResultsTableSelector(ImagePlus imp) {
-        // TODO Auto-generated constructor stub
-        this.imp = imp;
+
+    public ImageResultsTableSelector(ImagePlus imp, ManyBlobs blobs) {
+        _image = imp;
+        _blobs = blobs;
+
+        _blobMap = new HashMap<Point, Integer>();
+        int i = 0;
+        for (Blob blob : _blobs) {
+            int[] contourX = blob.getLineX();
+            int[] contourY = blob.getLineY();
+
+            for (int j = 0; j < blob.getLength(); j++) {
+                _blobMap.put(new Point(contourX[j], contourY[j]), i);
+            }
+            i++;
+        }
         isParticleSelected = false;
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        double mag = ((ImageCanvas)imp.getWindow().getComponent(0)).getMagnification();
-        double x = (e.getX()*1.0/mag );
-        double y = (e.getY()*1.0/mag);
+        Point location = _image.getCanvas().getCursorLoc();
 
-
-        Overlay ov = imp.getOverlay();
-        if(ov==null){
+        Overlay ov = _image.getOverlay();
+        if (ov == null) {
             ov = new Overlay();
-            imp.setOverlay(ov);
-        }else{
+            _image.setOverlay(ov);
+        } else {
             ov.clear();
         }
+
         isParticleSelected = false;
-        for(int i = 0; i < Analyzer.getResultsTable().getCounter(); i++){
-            int slice = 1;
-            //int slice = (int)Analyzer.getResultsTable().getValueAsDouble(0, i);
-            if(slice==imp.getSlice()){
+        Integer index = this.getNearestBlobIndex(location);
+        Blob b = _blobs.get(index);
 
-                int bloblabel= (int)Analyzer.getResultsTable().getValueAsDouble(1, i);
-                Blob b = null;
-                //Blob b = Shape_Filter.getInstance().getBlobByFrameAndLabel(slice-1, bloblabel);
+        IJ.getTextPanel().setSelection(index, index);
 
-                if(b.getOuterContour().contains(x, y)){
+        PolygonRoi pr = new PolygonRoi(b.getOuterContour().xpoints.clone(), b.getOuterContour().ypoints.clone(), b.getOuterContour().npoints, Roi.TRACED_ROI);
+        pr.setStrokeWidth(2);
+        pr.setPosition(1);
+        ov.add(pr);
+        Point[] mer = b.getMinimumBoundingRectangle();
+        int[] xpoints = new int[mer.length];
+        int[] ypoints = new int[mer.length];
+        for (int j = 0; j < mer.length; j++) {
+            xpoints[j] = mer[j].x;
+            ypoints[j] = mer[j].y;
+        }
+        PolygonRoi pr2 = new PolygonRoi(xpoints, ypoints, mer.length, Roi.POLYGON);
+        pr2.setStrokeWidth(1);
+        pr2.setStrokeColor(Color.red);
+        pr2.setPosition(1);
+        ov.add(pr2);
+        IJ.getImage().repaintWindow();
+        isParticleSelected = true;
+    }
 
-                    IJ.getTextPanel().setSelection(i, i);
+    private Integer getNearestBlobIndex(Point p) {
+        int x = p.x;
+        int y = p.y;
 
-                    PolygonRoi pr = new PolygonRoi(b.getOuterContour().xpoints.clone(),b.getOuterContour().ypoints.clone(),b.getOuterContour().npoints,Roi.TRACED_ROI);
-                    pr.setStrokeWidth(2);
-                    pr.setPosition(slice);
-                    ov.add(pr);
-                    Point[] mer = b.getMinimumBoundingRectangle();
-                    int[] xpoints = new int[mer.length];
-                    int[] ypoints = new int[mer.length];
-                    for(int j = 0; j < mer.length; j++){
-                        xpoints[j] = mer[j].x;
-                        ypoints[j] = mer[j].y;
-                    }
-                    PolygonRoi pr2 = new PolygonRoi(xpoints, ypoints, mer.length, Roi.POLYGON);
-                    pr2.setStrokeWidth(1);
-                    pr2.setStrokeColor(Color.red);
-                    pr2.setPosition(slice);
-                    ov.add(pr2);
-                    IJ.getImage().repaintWindow();
-                    isParticleSelected = true;
+        int offset = 1;
+
+        while (true) {
+            for (int j = -offset; j <= offset; j++) {
+                p.setLocation(x + j, y - offset);
+                if (_blobMap.containsKey(p)) {
+                    return _blobMap.get(p);
                 }
-
-
-
-
             }
-            else if(slice >IJ.getImage().getSlice()){
-                break;
+            for (int j = -offset; j <= offset; j++) {
+                p.setLocation(x + j, y + offset);
+                if (_blobMap.containsKey(p)) {
+                    return _blobMap.get(p);
+                }
             }
+            for (int j = -offset; j <= offset; j++) {
+                p.setLocation(x - offset, y + j);
+                if (_blobMap.containsKey(p)) {
+                    return _blobMap.get(p);
+                }
+            }
+            for (int j = -offset; j <= offset; j++) {
+                p.setLocation(x + offset, y + j);
+                if (_blobMap.containsKey(p)) {
+                    return _blobMap.get(p);
+                }
+            }
+
+            offset++;
         }
     }
 
@@ -107,5 +141,4 @@ public class ImageResultsTableSelector implements MouseListener {
         // TODO Auto-generated method stub
 
     }
-
 }
