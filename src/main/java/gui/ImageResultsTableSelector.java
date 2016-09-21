@@ -23,12 +23,14 @@ public class ImageResultsTableSelector implements MouseListener {
 
     private ImagePlus _image;
     private ManyBlobs _blobs;
+    private int _slice;
     private Map<Point, Integer> _blobMap;
     public static boolean isParticleSelected;
 
-    public ImageResultsTableSelector(ImagePlus imp, ManyBlobs blobs) {
+    public ImageResultsTableSelector(ImagePlus imp, ManyBlobs blobs, int slice) {
         _image = imp;
         _blobs = blobs;
+        _slice = slice;
 
         _blobMap = new HashMap<Point, Integer>();
         int i = 0;
@@ -64,7 +66,7 @@ public class ImageResultsTableSelector implements MouseListener {
 
         PolygonRoi pr = new PolygonRoi(b.getOuterContour().xpoints.clone(), b.getOuterContour().ypoints.clone(), b.getOuterContour().npoints, Roi.TRACED_ROI);
         pr.setStrokeWidth(2);
-        pr.setPosition(1);
+        pr.setPosition(_slice);
         ov.add(pr);
         Point[] mer = b.getMinimumBoundingRectangle();
         int[] xpoints = new int[mer.length];
@@ -76,7 +78,7 @@ public class ImageResultsTableSelector implements MouseListener {
         PolygonRoi pr2 = new PolygonRoi(xpoints, ypoints, mer.length, Roi.POLYGON);
         pr2.setStrokeWidth(1);
         pr2.setStrokeColor(Color.red);
-        pr2.setPosition(1);
+        pr2.setPosition(_slice);
         ov.add(pr2);
         IJ.getImage().repaintWindow();
         isParticleSelected = true;

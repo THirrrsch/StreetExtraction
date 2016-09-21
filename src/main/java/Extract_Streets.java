@@ -15,6 +15,8 @@ import ij.process.ImageProcessor;
 import java.awt.*;
 
 public class Extract_Streets implements PlugInFilter {
+    public static final int RESULT_IMAGE_SLICE = 2;
+
     private ImagePlus _image;
 
     public Extract_Streets() {
@@ -30,25 +32,26 @@ public class Extract_Streets implements PlugInFilter {
         ManyBlobs preprocessedBlobs = preprocessor.process();
         preprocessedBlobs.computeFeatures();
 
-        ImagePlus resultImage = NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4);
-        resultImage.show();
-
-        ImageStack stack = _image.getStack();
-        stack.addSlice("result slice", resultImage.getProcessor());
-
-        ImagePlus stackedImage = new ImagePlus("Stack", stack);
-        stackedImage.show();
-        stackedImage.updateAndDraw();
+        ImagePlus resultStack = this.createResultStack();
 
         this.fillFeatureTable(preprocessedBlobs);
-        resultImage.getCanvas().addMouseListener(new ImageResultsTableSelector(resultImage, preprocessedBlobs));
+        resultStack.getCanvas().addMouseListener(new ImageResultsTableSelector(resultStack, preprocessedBlobs, RESULT_IMAGE_SLICE));
 
-        FeatureEvaluator evaluator = new FeatureEvaluator(preprocessedBlobs, resultImage);
+        FeatureEvaluator evaluator = new FeatureEvaluator(preprocessedBlobs, resultStack);
         StreetExtrationDialog dialog = new StreetExtrationDialog(evaluator);
 
         dialog.show();
+    }
 
-        //IJ.run("Images to Stack", "name=Stack title=[] use");
+    private ImagePlus createResultStack() {
+        ImageStack stack = _image.getStack();
+        stack.addSlice(NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4).getProcessor());
+        ImagePlus stackedImage = new ImagePlus("Stack", stack);
+        stackedImage.setSlice(RESULT_IMAGE_SLICE);
+        stackedImage.show();
+        _image.close();
+
+        return stackedImage;
     }
 
     private void fillFeatureTable(ManyBlobs blobs) {
