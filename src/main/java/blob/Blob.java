@@ -106,7 +106,7 @@ public class Blob {
 		this.cal = cal;
 	}
 	
-	void draw(ImageProcessor ip, int options, Color col){
+	public void draw(ImageProcessor ip, int options, Color col){
 		ip.setColor(col);
 		fillPolygon(ip, outerContour, false);
 		

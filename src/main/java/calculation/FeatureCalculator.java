@@ -1,9 +1,9 @@
-package blob;
+package calculation;
 
 import Util.BlobMapper;
-import Util.FeatureConstants;
 import Util.LineMapper;
 import Util.Utils;
+import blob.*;
 import ij.ImagePlus;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-class FeatureCalculator {
+public class FeatureCalculator {
 
     private ManyBlobs _blobs;
     private ImagePlus _binaryImage;

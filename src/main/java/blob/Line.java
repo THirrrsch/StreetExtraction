@@ -1,7 +1,7 @@
 package blob;
 
-import Util.FeatureConstants;
 import Util.Utils;
+import calculation.FeatureConstants;
 import ij.process.ImageProcessor;
 
 import java.awt.*;

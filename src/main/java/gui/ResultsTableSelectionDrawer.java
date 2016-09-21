@@ -1,4 +1,4 @@
-package Util;
+package gui;
 
 import blob.Blob;
 import blob.ManyBlobs;

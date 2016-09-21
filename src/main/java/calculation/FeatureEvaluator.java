@@ -1,11 +1,13 @@
-package blob;
+package calculation;
 
-import Util.EvaluationConstants;
-import Util.EvaluationValues;
+import blob.Blob;
+import blob.ManyBlobs;
+import calculation.EvaluationConstants;
+import calculation.EvaluationValues;
 import ij.ImagePlus;
-import ij.gui.NewImage;
 import ij.process.ImageProcessor;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.Map;
 public class FeatureEvaluator {
 
     private final ManyBlobs _inputBlobs;
-    private ImageProcessor _resultProcessor;
+    private ImagePlus _resultImage;
 
     private EvaluationValues _lengthValues;
     private EvaluationValues _clusteringValues;
@@ -23,9 +25,9 @@ public class FeatureEvaluator {
 
     private double _threshold;
 
-    public FeatureEvaluator(ManyBlobs blobs, ImageProcessor resultProcessor) {
+    public FeatureEvaluator(ManyBlobs blobs, ImagePlus resultImage) {
         _inputBlobs = blobs;
-        _resultProcessor = resultProcessor;
+        _resultImage = resultImage;
 
         _lengthValues = EvaluationConstants.lengthValues;
         _clusteringValues = EvaluationConstants.clusteringValues;
@@ -83,10 +85,11 @@ public class FeatureEvaluator {
         Map<Blob, Double> overallGrades = this.evaluateGrades(lengthGrades, clusteringGrades, parallelCoverageGrades, lineFollowingGrades);
 
         List<Blob> resultBlobs = this.evaluateOverallResult(overallGrades);
+        ImageProcessor resultProcessor = _resultImage.getProcessor();
 
-        int width = _resultProcessor.getWidth();
-        int height = _resultProcessor.getHeight();
-        byte[] pixels = (byte[]) _resultProcessor.getPixels();
+        int width = resultProcessor.getWidth();
+        int height = resultProcessor.getHeight();
+        byte[] pixels = (byte[]) resultProcessor.getPixels();
 
         for (int x = 0; x < width - 1; x++) {
             for (int y = 0; y < height - 1; y++) {
@@ -94,9 +97,15 @@ public class FeatureEvaluator {
             }
         }
 
-        for (Blob blob : resultBlobs) {
-            blob.draw(_resultProcessor);
+        for (Blob blob : _inputBlobs) {
+            blob.draw(resultProcessor, 1, Color.LIGHT_GRAY);
         }
+
+        for (Blob blob : resultBlobs) {
+            blob.draw(resultProcessor);
+        }
+
+        _resultImage.updateAndDraw();
     }
 
     private Map<Blob, Double> evaluateLength() {

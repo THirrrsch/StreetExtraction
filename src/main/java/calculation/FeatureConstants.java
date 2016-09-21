@@ -1,4 +1,4 @@
-package Util;
+package calculation;
 
 public interface FeatureConstants {
     int SAMPLE_RATE = 5;

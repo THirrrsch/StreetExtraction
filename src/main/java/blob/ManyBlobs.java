@@ -19,6 +19,7 @@ TABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 
 package blob;
 
+import calculation.FeatureCalculator;
 import ij.ImagePlus;
 import ij.process.ImageStatistics;
 
