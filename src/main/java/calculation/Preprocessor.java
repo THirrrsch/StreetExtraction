@@ -18,6 +18,8 @@ import java.util.Map;
 public class Preprocessor {
 
     private ImagePlus _inputImage;
+    private ImagePlus _centroidImage;
+    private ImagePlus _lineImage;
     private int _width;
     private int _height;
 
@@ -25,6 +27,16 @@ public class Preprocessor {
         _inputImage = binaryImage;
         _width = _inputImage.getWidth();
         _height = _inputImage.getHeight();
+        _lineImage = NewImage.createByteImage("artificial parallel image", _width, _height, 1, 4);
+        _centroidImage = NewImage.createByteImage("centroid image", _width, _height, 1, 4);
+    }
+
+    public ImagePlus getLineImage() {
+        return _lineImage;
+    }
+
+    public ImagePlus getCentroidImage() {
+        return _centroidImage;
     }
 
     public ManyBlobs process() {
@@ -162,11 +174,8 @@ public class Preprocessor {
         int dottedLineMinLength = FeatureConstants.DOTTED_LINE_MIN_LENGTH;
         int dottedLineMaxLength = FeatureConstants.DOTTED_LINE_MAX_LENGTH;
 
-//        ImagePlus centroidImage = NewImage.createByteImage("centroid image", _width, _height, 1, 4);
-//        ImageProcessor centroidProcessor = centroidImage.getProcessor();
-//
-//        ImagePlus parallelImage = NewImage.createByteImage("centroid image", _width, _height, 1, 4);
-//        ImageProcessor parallelProcessor = centroidImage.getProcessor();
+        ImageProcessor centroidProcessor = _centroidImage.getProcessor();
+        ImageProcessor lineProcessor = _lineImage.getProcessor();
 
         for (Blob blob : inputBlobs) {
             int length = blob.getOuterContour().npoints / 2;
@@ -174,11 +183,11 @@ public class Preprocessor {
                 Point centroid = blob.getCentroid();
                 smallBlobs.add(blob);
                 centroids.put(centroid, blob);
-
-                //blob.drawCentroid(centroidProcessor);
+                blob.drawCentroid(centroidProcessor);
+                blob.drawCentroid(lineProcessor);
             } else {
-                //blob.draw(centroidProcessor);
-                //blob.draw(parallelProcessor);
+                blob.draw(lineProcessor);
+                blob.draw(centroidProcessor);
             }
         }
 
@@ -194,15 +203,13 @@ public class Preprocessor {
                 //dottedLineBlobs.addAll(currentLineBlobs);  // if yes, comment
                 Line line = new Line(currentLineBlobs);
                 result.add(line);
-                //line.draw(parallelProcessor);
+                line.draw(lineProcessor);
             }
             //}  // if yes, comment
         }
 
-        //centroidImage.show();
-        //centroidImage.updateAndDraw();
-        //parallelImage.show();
-        //parallelImage.updateAndDraw();
+        _centroidImage.updateAndDraw();
+        _lineImage.updateAndDraw();
 
         return result;
     }

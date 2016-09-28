@@ -3,6 +3,8 @@ package calculation;
 import blob.Blob;
 import blob.ManyBlobs;
 import ij.ImagePlus;
+import ij.measure.ResultsTable;
+import ij.plugin.filter.Analyzer;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
@@ -28,7 +30,7 @@ public class FeatureEvaluator {
     public FeatureEvaluator(ManyBlobs blobs, ImagePlus resultStack) {
         _inputBlobs = blobs;
         _resultStack = resultStack;
-        _resultProcessor = resultStack.getStack().getProcessor(2);
+        _resultProcessor = resultStack.getStack().getProcessor(resultStack.getStack().getSize());
 
         _lengthValues = EvaluationConstants.lengthValues;
         _clusteringValues = EvaluationConstants.clusteringValues;
@@ -78,14 +80,10 @@ public class FeatureEvaluator {
     }
 
     public void evaluate() {
-        Map<Blob, Double> lengthGrades = this.evaluateLength();
-        Map<Blob, Double> clusteringGrades = this.evalauteClusteringResults();
-        Map<Blob, Double> parallelCoverageGrades = this.evaluateParallelCoverage();
-        Map<Blob, Double> lineFollowingGrades = this.evaluateLineFollowingSegments();
+        Map<Blob, EvaluationResult> results = this.evaluateFeatures();
+        List<Blob> resultBlobs = this.EvaluateResults(results);
 
-        Map<Blob, Double> overallGrades = this.evaluateGrades(lengthGrades, clusteringGrades, parallelCoverageGrades, lineFollowingGrades);
-
-        List<Blob> resultBlobs = this.evaluateOverallResult(overallGrades);
+        ResultsTable rt = Analyzer.getResultsTable();
 
         int width = _resultProcessor.getWidth();
         int height = _resultProcessor.getHeight();
@@ -93,136 +91,111 @@ public class FeatureEvaluator {
 
         for (int x = 0; x < width - 1; x++) {
             for (int y = 0; y < height - 1; y++) {
-                pixels[y * width + x] = (byte)255;
+                pixels[y * width + x] = (byte) 255;
             }
         }
 
-        for (Blob blob : _inputBlobs) {
+        for (int i = 0; i < _inputBlobs.size(); i++) {
+            Blob blob = _inputBlobs.get(i);
+            EvaluationResult blobResult = results.get(blob);
             blob.draw(_resultProcessor, 1, Color.LIGHT_GRAY);
+
+            rt.setValue(1, i, blobResult.getLengthResult());
+            rt.setValue(3, i, blobResult.getClusteringResult());
+            rt.setValue(5, i, blobResult.getParallelResult());
+            rt.setValue(7, i, blobResult.getLineFollowingResult());
+            rt.setValue(8, i, blobResult.getOverallResult());
         }
 
         for (Blob blob : resultBlobs) {
             blob.draw(_resultProcessor);
         }
 
+        rt.show("Results");
         _resultStack.updateAndDraw();
     }
 
-    private Map<Blob, Double> evaluateLength() {
-        Map<Blob, Double> result = new HashMap<Blob, Double>();
+    private Map<Blob, EvaluationResult> evaluateFeatures() {
+        Map<Blob, EvaluationResult> result = new HashMap<Blob, EvaluationResult>();
 
         for (Blob blob : _inputBlobs) {
-            int length = blob.getLength();
-            double prohability;
-            if (length <= _lengthValues.INFIMUM) {
-                prohability = EvaluationConstants.MIN_PROBABILITY;
-            } else if (length <= _lengthValues.SUPREMUM) {
-                prohability = EvaluationConstants.EVEN_PROBABILITY;
-            } else {
-                prohability = EvaluationConstants.MAX_PROBABILITY;
-            }
+            double lengthResult = this.getLengthResult(blob);
+            double clusteringResult = this.getClusteringResult(blob);
+            double parallelResult = this.getParallelResult(blob);
+            double lineFollowingResult = this.getLineFollowingResult(blob);
 
-            result.put(blob, prohability);
+            double overallResult = this.getOverallResult(lengthResult, clusteringResult, parallelResult, lineFollowingResult);
+            EvaluationResult currentResult = new EvaluationResult(lengthResult, clusteringResult, parallelResult, lineFollowingResult, overallResult);
+
+            result.put(blob, currentResult);
         }
 
         return result;
     }
 
-    private Map<Blob, Double> evalauteClusteringResults() {
-        Map<Blob, Double> result = new HashMap<Blob, Double>();
-
-        for (Blob blob : _inputBlobs) {
-            if (blob.isInCluster()) {
-                result.put(blob, EvaluationConstants.MIN_PROBABILITY);
-            } else {
-                result.put(blob, EvaluationConstants.EVEN_PROBABILITY);
-            }
+    private double getLengthResult(Blob blob) {
+        int length = blob.getLength();
+        if (length <= _lengthValues.INFIMUM) {
+            return EvaluationConstants.MIN_PROBABILITY;
+        } else if (length <= _lengthValues.SUPREMUM) {
+            return EvaluationConstants.EVEN_PROBABILITY;
+        } else {
+            return EvaluationConstants.MAX_PROBABILITY;
         }
-
-        return result;
     }
 
-    private Map<Blob, Double> evaluateParallelCoverage() {
-        Map<Blob, Double> result = new HashMap<Blob, Double>();
-
-        for (Blob blob : _inputBlobs) {
-            double parallelCoverage = blob.getParallelCoverage();
-            double probability;
-            if (parallelCoverage <= _parallelCoverageValues.INFIMUM) {
-                probability = EvaluationConstants.MIN_PROBABILITY;
-            } else if (parallelCoverage <= _parallelCoverageValues.SUPREMUM) {
-                probability = EvaluationConstants.EVEN_PROBABILITY;
-            } else {
-                probability = EvaluationConstants.MAX_PROBABILITY;
-            }
-
-            result.put(blob, probability);
+    private double getClusteringResult(Blob blob) {
+        if (blob.isInCluster()) {
+            return EvaluationConstants.MIN_PROBABILITY;
+        } else {
+            return EvaluationConstants.EVEN_PROBABILITY;
         }
 
-        return result;
     }
 
-    private Map<Blob, Double> evaluateLineFollowingSegments() {
-        Map<Blob, Double> result = new HashMap<Blob, Double>();
-
-        for (Blob blob : _inputBlobs) {
-            int lineFollowingSegmentCount = blob.getLineFollowingElements();
-            double probability;
-            if (lineFollowingSegmentCount <= _lineFollowingValues.INFIMUM) {
-                probability = EvaluationConstants.MIN_PROBABILITY;
-            } else if (lineFollowingSegmentCount <= _lineFollowingValues.SUPREMUM) {
-                probability = EvaluationConstants.EVEN_PROBABILITY;
-            } else {
-                probability = EvaluationConstants.MAX_PROBABILITY;
-            }
-
-            result.put(blob, probability);
+    private double getParallelResult(Blob blob) {
+        double parallelCoverage = blob.getParallelCoverage();
+        if (parallelCoverage <= _parallelCoverageValues.INFIMUM) {
+            return EvaluationConstants.MIN_PROBABILITY;
+        } else if (parallelCoverage <= _parallelCoverageValues.SUPREMUM) {
+            return EvaluationConstants.EVEN_PROBABILITY;
+        } else {
+            return EvaluationConstants.MAX_PROBABILITY;
         }
-
-        return result;
     }
 
-    private Map<Blob, Double> evaluateGrades(Map<Blob, Double> lengthGrades, Map<Blob, Double> clusteringGrades, Map<Blob, Double> parallelCoverageGrades, Map<Blob, Double> lineFollowingGrades) {
-        Map<Blob, Double> result = new HashMap<Blob, Double>();
-
-        for (Blob blob : _inputBlobs) {
-            double lengthGrade = lengthGrades.get(blob);
-            double clusteringGrade = clusteringGrades.get(blob);
-            double parallelCoverageGrade = parallelCoverageGrades.get(blob);
-            double lineFollowingGrade = lineFollowingGrades.get(blob);
-
-            lengthGrade *= _lengthValues.WEIGHT;
-            clusteringGrade *= _clusteringValues.WEIGHT;
-            parallelCoverageGrade *= _parallelCoverageValues.WEIGHT;
-            lineFollowingGrade *= _lineFollowingValues.WEIGHT;
-
-            int weightSum = _lengthValues.WEIGHT + _clusteringValues.WEIGHT + _parallelCoverageValues.WEIGHT + _lineFollowingValues.WEIGHT;
-            double overAllGrade = (lengthGrade + clusteringGrade + parallelCoverageGrade + lineFollowingGrade) / weightSum;
-            result.put(blob, overAllGrade);
+    private double getLineFollowingResult(Blob blob) {
+        int lineFollowingSegmentCount = blob.getLineFollowingElements();
+        if (lineFollowingSegmentCount <= _lineFollowingValues.INFIMUM) {
+            return EvaluationConstants.MIN_PROBABILITY;
+        } else if (lineFollowingSegmentCount <= _lineFollowingValues.SUPREMUM) {
+            return EvaluationConstants.EVEN_PROBABILITY;
+        } else {
+            return EvaluationConstants.MAX_PROBABILITY;
         }
-
-        return result;
     }
 
-    private List<Blob> evaluateOverallResult(Map<Blob, Double> grades) {
+    private double getOverallResult(double lengthResult, double clusteringResult, double parallelResult, double lineFollowingResult) {
+        lengthResult *= _lengthValues.WEIGHT;
+        clusteringResult *= _clusteringValues.WEIGHT;
+        parallelResult *= _parallelCoverageValues.WEIGHT;
+        lineFollowingResult *= _lineFollowingValues.WEIGHT;
+
+        int weightSum = _lengthValues.WEIGHT + _clusteringValues.WEIGHT + _parallelCoverageValues.WEIGHT + _lineFollowingValues.WEIGHT;
+        return ((lengthResult + clusteringResult + parallelResult + lineFollowingResult) / weightSum);
+    }
+
+    private List<Blob> EvaluateResults(Map<Blob, EvaluationResult> results) {
         List<Blob> result = new ArrayList<Blob>();
 
         for (Blob blob : _inputBlobs) {
-            if (grades.get(blob) > _threshold) {
+            if (results.get(blob).getOverallResult() > _threshold) {
                 result.add(blob);
             }
         }
 
         return result;
     }
-
-
-
-
-
-
-
-
 
 
 }

@@ -27,10 +27,10 @@ public class ImageResultsTableSelector implements MouseListener {
     private Map<Point, Integer> _blobMap;
     public static boolean isParticleSelected;
 
-    public ImageResultsTableSelector(ImagePlus imp, ManyBlobs blobs, int slice) {
+    public ImageResultsTableSelector(ImagePlus imp, ManyBlobs blobs) {
         _image = imp;
         _blobs = blobs;
-        _slice = slice;
+        _slice = _image.getStack().getSize();
 
         _blobMap = new HashMap<Point, Integer>();
         int i = 0;

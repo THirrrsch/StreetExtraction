@@ -15,8 +15,6 @@ import ij.process.ImageProcessor;
 import java.awt.*;
 
 public class Extract_Streets implements PlugInFilter {
-    public static final int RESULT_IMAGE_SLICE = 2;
-
     private ImagePlus _image;
 
     public Extract_Streets() {
@@ -32,10 +30,9 @@ public class Extract_Streets implements PlugInFilter {
         ManyBlobs preprocessedBlobs = preprocessor.process();
         preprocessedBlobs.computeFeatures();
 
-        ImagePlus resultStack = this.createResultStack();
+        ImagePlus resultStack = this.createResultStack(preprocessor);
 
-        this.fillFeatureTable(preprocessedBlobs);
-        resultStack.getCanvas().addMouseListener(new ImageResultsTableSelector(resultStack, preprocessedBlobs, RESULT_IMAGE_SLICE));
+        resultStack.getCanvas().addMouseListener(new ImageResultsTableSelector(resultStack, preprocessedBlobs));
 
         FeatureEvaluator evaluator = new FeatureEvaluator(preprocessedBlobs, resultStack);
         StreetExtrationDialog dialog = new StreetExtrationDialog(evaluator);
@@ -43,34 +40,17 @@ public class Extract_Streets implements PlugInFilter {
         dialog.show();
     }
 
-    private ImagePlus createResultStack() {
+    private ImagePlus createResultStack(Preprocessor preprocessor) {
         ImageStack stack = _image.getStack();
+        stack.addSlice(preprocessor.getCentroidImage().getProcessor());
+        stack.addSlice(preprocessor.getLineImage().getProcessor());
         stack.addSlice(NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4).getProcessor());
         ImagePlus stackedImage = new ImagePlus("Stack", stack);
-        stackedImage.setSlice(RESULT_IMAGE_SLICE);
+        stackedImage.setSlice(stackedImage.getStack().getSize());
         stackedImage.show();
         _image.close();
 
         return stackedImage;
-    }
-
-    private void fillFeatureTable(ManyBlobs blobs) {
-        ResultsTable rt = Analyzer.getResultsTable();
-        if(rt==null)
-        {
-            rt = new ResultsTable();
-            Analyzer.setResultsTable(rt);
-        }
-
-        for (Blob blob : blobs) {
-            rt.incrementCounter();
-
-            rt.addValue("Length", blob.getLength());
-            rt.addValue("isInCluster", String.valueOf(blob.isInCluster()));
-            rt.addValue("Parallel Coverage", blob.getParallelCoverage());
-            rt.addValue("Line Following segments", blob.getLineFollowingElements());
-        }
-        rt.show("Results");
     }
 
     public static void main(String[] args) {

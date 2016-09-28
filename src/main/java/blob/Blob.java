@@ -215,12 +215,12 @@ public class Blob {
 		double sumx = 0;
 		double sumy = 0;
 
-		for (int i = 0; i < outerContour.npoints - 1; i++) {
+		for (int i = 0; i < outerContour.npoints; i++) {
 			sumx += x[i];
 			sumy += y[i];
 		}
 
-		centroid = new Point((int) (sumx / (outerContour.npoints - 1)), (int) (sumy / (outerContour.npoints - 1)));
+		centroid = new Point((int) (sumx / outerContour.npoints), (int) (sumy / outerContour.npoints));
 		return centroid;
 	}
 

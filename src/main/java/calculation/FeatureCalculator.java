@@ -5,6 +5,8 @@ import Util.LineMapper;
 import Util.Utils;
 import blob.*;
 import ij.ImagePlus;
+import ij.measure.ResultsTable;
+import ij.plugin.filter.Analyzer;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
@@ -35,6 +37,8 @@ public class FeatureCalculator {
         this.checkClustering();
         this.calculateParallelCoverage();
         this.calculateLineFollowingSegments();
+
+        this.fillFeatureTable();
     }
 
     private void checkClustering() {
@@ -208,6 +212,29 @@ public class FeatureCalculator {
             }
         }
         return null;
+    }
+
+    private void fillFeatureTable() {
+        ResultsTable rt = Analyzer.getResultsTable();
+        if (rt == null) {
+            rt = new ResultsTable();
+            Analyzer.setResultsTable(rt);
+        }
+
+        for (Blob blob : _blobs) {
+            rt.incrementCounter();
+
+            rt.addValue("Length", blob.getLength());
+            rt.addValue("Length %", 0);
+            rt.addValue("isInCluster", String.valueOf(blob.isInCluster()));
+            rt.addValue("Cluster %", 0);
+            rt.addValue("Parallel Coverage", blob.getParallelCoverage());
+            rt.addValue("Parallel %", 0);
+            rt.addValue("Line Following segments", blob.getLineFollowingElements());
+            rt.addValue("Line Following %", 0);
+            rt.addValue("Overall %", 0);
+        }
+        rt.show("Results");
     }
 
     private boolean isInImageRange(int x, int y) {
