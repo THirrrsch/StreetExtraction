@@ -101,6 +101,7 @@ public class Preprocessor {
 
                     if (i == 0) {
                         angleCurrent = Utils.getAngle(startX, endX, startY, endY);
+                        System.out.println("jo");
                     } else {
                         angleOld = angleCurrent;
                         angleCurrent = Utils.getAngle(startX, endX, startY, endY);
@@ -179,7 +180,7 @@ public class Preprocessor {
 
         for (Blob blob : inputBlobs) {
             int length = blob.getOuterContour().npoints / 2;
-            if (length > dottedLineMinLength && length <= dottedLineMaxLength) {
+            if (length < dottedLineMaxLength) {
                 Point centroid = blob.getCentroid();
                 smallBlobs.add(blob);
                 centroids.put(centroid, blob);

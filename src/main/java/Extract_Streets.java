@@ -35,15 +35,15 @@ public class Extract_Streets implements PlugInFilter {
         resultStack.getCanvas().addMouseListener(new ImageResultsTableSelector(resultStack, preprocessedBlobs));
 
         FeatureEvaluator evaluator = new FeatureEvaluator(preprocessedBlobs, resultStack);
-        StreetExtrationDialog dialog = new StreetExtrationDialog(evaluator);
+        StreetExtrationDialog dialog = new StreetExtrationDialog(evaluator, resultStack);
 
         dialog.show();
     }
 
     private ImagePlus createResultStack(Preprocessor preprocessor) {
         ImageStack stack = _image.getStack();
-        stack.addSlice(preprocessor.getCentroidImage().getProcessor());
-        stack.addSlice(preprocessor.getLineImage().getProcessor());
+        //stack.addSlice(preprocessor.getCentroidImage().getProcessor());
+        //stack.addSlice(preprocessor.getLineImage().getProcessor());
         stack.addSlice(NewImage.createByteImage("result image", _image.getWidth(), _image.getHeight(), 1, 4).getProcessor());
         ImagePlus stackedImage = new ImagePlus("Stack", stack);
         stackedImage.setSlice(stackedImage.getStack().getSize());
@@ -59,10 +59,7 @@ public class Extract_Streets implements PlugInFilter {
         String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
         System.setProperty("plugins.dir", pluginsDir);
         new ImageJ();
-        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test.png");
-        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\new_pale_data_log.png");
-        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\test-pale\\canny\\manyStreets.png");
-        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\test.png");
+        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\LoG\\" + EvaluationConstants.FILE_NAME + ".png");
         image.show();
         IJ.runPlugIn(clazz.getName(), "");
     }

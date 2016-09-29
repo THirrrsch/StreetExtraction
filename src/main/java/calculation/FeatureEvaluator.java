@@ -135,9 +135,9 @@ public class FeatureEvaluator {
 
     private double getLengthResult(Blob blob) {
         int length = blob.getLength();
-        if (length <= _lengthValues.INFIMUM) {
+        if (length < _lengthValues.INFIMUM) {
             return EvaluationConstants.MIN_PROBABILITY;
-        } else if (length <= _lengthValues.SUPREMUM) {
+        } else if (length < _lengthValues.SUPREMUM) {
             return EvaluationConstants.EVEN_PROBABILITY;
         } else {
             return EvaluationConstants.MAX_PROBABILITY;
@@ -155,9 +155,9 @@ public class FeatureEvaluator {
 
     private double getParallelResult(Blob blob) {
         double parallelCoverage = blob.getParallelCoverage();
-        if (parallelCoverage <= _parallelCoverageValues.INFIMUM) {
+        if (parallelCoverage < _parallelCoverageValues.INFIMUM) {
             return EvaluationConstants.MIN_PROBABILITY;
-        } else if (parallelCoverage <= _parallelCoverageValues.SUPREMUM) {
+        } else if (parallelCoverage < _parallelCoverageValues.SUPREMUM) {
             return EvaluationConstants.EVEN_PROBABILITY;
         } else {
             return EvaluationConstants.MAX_PROBABILITY;
@@ -166,9 +166,9 @@ public class FeatureEvaluator {
 
     private double getLineFollowingResult(Blob blob) {
         int lineFollowingSegmentCount = blob.getLineFollowingElements();
-        if (lineFollowingSegmentCount <= _lineFollowingValues.INFIMUM) {
+        if (lineFollowingSegmentCount < _lineFollowingValues.INFIMUM) {
             return EvaluationConstants.MIN_PROBABILITY;
-        } else if (lineFollowingSegmentCount <= _lineFollowingValues.SUPREMUM) {
+        } else if (lineFollowingSegmentCount < _lineFollowingValues.SUPREMUM) {
             return EvaluationConstants.EVEN_PROBABILITY;
         } else {
             return EvaluationConstants.MAX_PROBABILITY;

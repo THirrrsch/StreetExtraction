@@ -145,19 +145,20 @@ public class Utils {
         }
     }
 
-    // 0 - 360
+    // 0 - 180
     public static double getAngle(int startX, int endX, int startY, int endY) {
         return getAngle(endX - startX, endY - startY);
     }
 
-    // 0 - 360
+    // 0 - 180
     public static double getAngle(int dX, int dY) {
         double angleRAD = Math.atan2((double)(dY), (double)(dX));
-        return angleRAD * 180 / Math.PI;
+        double result = angleRAD * 180 / Math.PI;
+        return result < 0 ? 180 + result : result;
     }
 
     public static double getAngleDiff(double alpha, double beta) {
-        double diff = Math.abs(beta - alpha) % 360;
-        return diff < 180 ? diff : 360 - diff;
+        double diff = Math.abs(beta - alpha);
+        return diff < 90 ? diff : 180 - diff;
     }
 }
