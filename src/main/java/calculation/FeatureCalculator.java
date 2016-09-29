@@ -4,9 +4,12 @@ import Util.BlobMapper;
 import Util.LineMapper;
 import Util.Utils;
 import blob.*;
+
 import ij.ImagePlus;
+import ij.gui.NewImage;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
+import ij.process.ImageProcessor;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 
@@ -14,6 +17,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 
 public class FeatureCalculator {
 
@@ -42,8 +46,13 @@ public class FeatureCalculator {
     }
 
     private void checkClustering() {
+        ImagePlus clusteredImage = NewImage.createByteImage("clustered image", _width, _height, 1, 4);
+        ImageProcessor processor = clusteredImage.getProcessor();
+
         double epsilon = FeatureConstants.DBSCAN_EPSILON;
         int minPts = FeatureConstants.DBSCAN_MINPTS;
+
+        //Utils.printBlobsToCSV(_blobs);
 
         List<BlobWrapper> clusterInput = new ArrayList<BlobWrapper>(_blobs.size());
         for (Blob blob : _blobs) {
@@ -56,8 +65,12 @@ public class FeatureCalculator {
         for (Cluster<BlobWrapper> cluster : clusterResults) {
             for (BlobWrapper wrapper : cluster.getPoints()) {
                 wrapper.getBlob().setInCluster(true);
+                wrapper.getBlob().draw(processor);
             }
         }
+
+        clusteredImage.show();
+        clusteredImage.updateAndDraw();
     }
 
     private void calculateParallelCoverage() {
@@ -126,7 +139,7 @@ public class FeatureCalculator {
             List<Line> lines = entry.getValue();
             for (Line line : lines) {
                 double intersectedLineAngle = line.getAngleAt(p);
-                if (Utils.getAngleDiff(currentAngle, intersectedLineAngle) <= maxAngleDiff) {
+                if (Utils.getAngleDiffNotDirected(currentAngle, intersectedLineAngle) <= maxAngleDiff) {
                     return true;
                 }
             }
@@ -206,7 +219,7 @@ public class FeatureCalculator {
                         ? Utils.getAngle(contourX[0], contourX[sampleRate], contourY[0], contourY[sampleRate])
                         : Utils.getAngle(contourX[end], contourX[end - sampleRate], contourY[end], contourY[end - sampleRate]);
 
-                if (Utils.getAngleDiff(baseAngle, angle) < (double) maxAngleDiffCones) {
+                if (Utils.getAngleDiffDirected(baseAngle, angle) < (double) maxAngleDiffCones) {
                     return candidate;
                 }
             }

@@ -148,7 +148,7 @@ class ConnectedComponentLabeler {
 		Point nextPoint = nextPointOnContour(startPoint, proc, start);
 		
 		if (nextPoint.x == -1) {
-			// Point is isolated;
+			// DBSCAN_Point is isolated;
 			return contour;
 		}
 		Point T =  new Point(nextPoint.x,nextPoint.y);

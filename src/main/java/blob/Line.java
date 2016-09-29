@@ -74,7 +74,10 @@ public class Line {
             Point pStart;
             Point pEnd;
 
-            if (i - halfSampleRate < 0) {
+            if (sampleRate > _points.size()) {
+                pStart = _points.get(0);
+                pEnd = _points.get(_points.size() - 1);
+            } else if (i - halfSampleRate < 0) {
                 pStart = _points.get(0);
                 pEnd = _points.get(sampleRate - 1);
             } else if (i + halfSampleRate >= _points.size()) {

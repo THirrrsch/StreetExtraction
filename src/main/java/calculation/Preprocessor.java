@@ -78,6 +78,30 @@ public class Preprocessor {
         return result;
     }
 
+    private ManyBlobs removeShortLines(ManyBlobs inputBlobs) {
+        ImagePlus longLineImage = NewImage.createByteImage("preprocessed image", _width, _height, 1, 4);
+        ImageProcessor longLineProcessor = longLineImage.getProcessor();
+        int _minContourLength = FeatureConstants.MIN_CONTOUR_LENGTH;
+
+        ManyBlobs result = new ManyBlobs();
+
+        for (Blob blob : inputBlobs) {
+            int length = blob.getOuterContour().npoints / 2;
+            if (length >= _minContourLength) {
+                blob.draw(longLineProcessor);
+                result.add(blob);
+                blob.setLength(length);
+            }
+        }
+
+        //longLineImage.show();
+        //longLineImage.updateAndDraw();
+
+        result.setBinaryImage(longLineImage);
+        result.createLineOrdering();
+        return result;
+    }
+
     private ManyBlobs getStraightLineBlobs(ManyBlobs inputBlobs) {
         double angleCurrent = 0;
         double angleOld;
@@ -101,11 +125,10 @@ public class Preprocessor {
 
                     if (i == 0) {
                         angleCurrent = Utils.getAngle(startX, endX, startY, endY);
-                        System.out.println("jo");
                     } else {
                         angleOld = angleCurrent;
                         angleCurrent = Utils.getAngle(startX, endX, startY, endY);
-                        angleDiff = Utils.getAngleDiff(angleCurrent, angleOld);
+                        angleDiff = Utils.getAngleDiffNotDirected(angleCurrent, angleOld);
 
                         if (angleDiff < maxAngleDiff) {
                             for (int j = 0; j < sampleRate; ++j) {
@@ -120,30 +143,6 @@ public class Preprocessor {
         ManyBlobs result = new ManyBlobs(straightLineImage);
         result.findConnectedComponents();
 
-        return result;
-    }
-
-    private ManyBlobs removeShortLines(ManyBlobs inputBlobs) {
-        ImagePlus longLineImage = NewImage.createByteImage("preprocessed image", _width, _height, 1, 4);
-        ImageProcessor longLineProcessor = longLineImage.getProcessor();
-        int _minContourLength = FeatureConstants.MIN_CONTOUR_LENGTH;
-
-        ManyBlobs result = new ManyBlobs();
-
-        for (Blob blob : inputBlobs) {
-            int length = blob.getOuterContour().npoints / 2;
-            if (length >= _minContourLength) {
-                blob.draw(longLineProcessor);
-                result.add(blob);
-                blob.setLength(length);
-            }
-        }
-
-        //longLineImage.show();
-        //longLineImage.updateAndDraw();
-
-        result.setBinaryImage(longLineImage);
-        result.createLineOrdering();
         return result;
     }
 
@@ -199,6 +198,7 @@ public class Preprocessor {
         // TODO re-use already used centroids or not?
         for (Blob blob : smallBlobs) {
             //if (!dottedLineBlobs.contains(blob)) {   // if yes, comment
+
             List<Blob> currentLineBlobs = this.buildLine(blob, centroids, dottedLineBlobs);
             if (currentLineBlobs.size() > 2) {
                 //dottedLineBlobs.addAll(currentLineBlobs);  // if yes, comment

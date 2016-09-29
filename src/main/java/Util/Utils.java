@@ -111,17 +111,18 @@ public class Utils {
     public static void printBlobsToCSV(ManyBlobs blobs) {
         try
         {
-            FileWriter writer = new FileWriter("C:\\Users\\Hirsch\\Desktop\\test.csv");
+            FileWriter writer = new FileWriter("C:\\Users\\Hirsch\\Desktop\\test2.csv");
 
             for (Blob blob : blobs) {
-                int end = blob.getOuterContour().npoints / 2;
-                int[] contourX = blob.getLineX();
-                int[] contourY = blob.getLineY();
-                double angle = Utils.getAngle(contourX[0], contourX[end], contourY[0], contourY[end]);
+                double angle = Utils.getAngle180Positive(blob.getLineX()[0], blob.getLineX()[blob.getLength()], blob.getLineY()[0], blob.getLineY()[blob.getLength()]);
 
-                writer.append(String.valueOf(end));
+                writer.append(String.valueOf(blob.getLength()));
                 writer.append(' ');
                 writer.append(String.valueOf(angle));
+                writer.append(' ');
+                writer.append(String.valueOf(blob.getCentroid().getX()));
+                writer.append(' ');
+                writer.append(String.valueOf(blob.getCentroid().getY()));
                 writer.append('\n');
             }
 
@@ -145,20 +146,34 @@ public class Utils {
         }
     }
 
-    // 0 - 180
+    // -180 // +180
     public static double getAngle(int startX, int endX, int startY, int endY) {
         return getAngle(endX - startX, endY - startY);
     }
 
-    // 0 - 180
+    // -180 // +180
     public static double getAngle(int dX, int dY) {
         double angleRAD = Math.atan2((double)(dY), (double)(dX));
-        double result = angleRAD * 180 / Math.PI;
-        return result < 0 ? 180 + result : result;
+        return angleRAD * 180 / Math.PI;
     }
 
-    public static double getAngleDiff(double alpha, double beta) {
-        double diff = Math.abs(beta - alpha);
-        return diff < 90 ? diff : 180 - diff;
+    public static double getAngle180Positive(int startX, int endX, int startY, int endY) {
+        double angleRAD = Math.atan2((double)(endY - startY), (double)(endX - startX));
+        double angleDegree = angleRAD * 180 / Math.PI;
+        return angleDegree > 0 ? angleDegree : 180 + angleDegree;
     }
+
+    // <-- vs --> = 0° difference
+    public static double getAngleDiffNotDirected(double alpha, double beta) {
+        double result = getAngleDiffDirected(alpha, beta);
+        return result < 90 ? result : 180 - result;
+    }
+
+    // <-- vs --> = 180° difference
+    public static double getAngleDiffDirected(double alpha, double beta) {
+        double diff = Math.abs(beta - alpha) % 360;
+        return diff < 180 ? diff : 360 - diff;
+    }
+
+
 }
