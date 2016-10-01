@@ -12,5 +12,5 @@ public interface EvaluationConstants {
     double THRESHOLD = 0.6;
 
     String COLORED = "test-pale";
-    String FILE_NAME = "basic1";
+    String FILE_NAME = "wtf";
 }

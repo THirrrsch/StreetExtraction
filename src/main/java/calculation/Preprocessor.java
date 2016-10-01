@@ -79,7 +79,7 @@ public class Preprocessor {
     }
 
     private ManyBlobs removeShortLines(ManyBlobs inputBlobs) {
-        ImagePlus longLineImage = NewImage.createByteImage("preprocessed image", _width, _height, 1, 4);
+        ImagePlus longLineImage = NewImage.createByteImage(EvaluationConstants.FILE_NAME, _width, _height, 1, 4);
         ImageProcessor longLineProcessor = longLineImage.getProcessor();
         int _minContourLength = FeatureConstants.MIN_CONTOUR_LENGTH;
 
@@ -94,8 +94,8 @@ public class Preprocessor {
             }
         }
 
-        //longLineImage.show();
-        //longLineImage.updateAndDraw();
+        longLineImage.show();
+        longLineImage.updateAndDraw();
 
         result.setBinaryImage(longLineImage);
         result.createLineOrdering();
@@ -117,7 +117,7 @@ public class Preprocessor {
                 int[] contourY = blob.getOuterContour().ypoints;
                 int max = blob.getOuterContour().npoints - sampleRate;
 
-                for (int i = 0; i < max; i += sampleRate) {
+                for (int i = 0; i < max; i+= sampleRate) {
                     int startX = contourX[i];
                     int startY = contourY[i];
                     int endX = contourX[i + sampleRate];

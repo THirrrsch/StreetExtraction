@@ -5,20 +5,12 @@ import gui.ImageResultsTableSelector;
 import gui.StreetExtrationDialog;
 import ij.*;
 import ij.gui.*;
-import ij.measure.ResultsTable;
-import ij.plugin.filter.Analyzer;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.BinaryProcessor;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
-import java.awt.List;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.*;
 
 public class Extract_Streets implements PlugInFilter {
     private ImagePlus _image;
@@ -60,65 +52,141 @@ public class Extract_Streets implements PlugInFilter {
     }
 
     public static void main(String[] args) {
+        //evaluate();
 
-        evaluate();
-
-//        Class clazz = Extract_Streets.class;
-//        String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
-//        String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
-//        System.setProperty("plugins.dir", pluginsDir);
-//        new ImageJ();
-//        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\LoG\\" + EvaluationConstants.FILE_NAME + ".png");
-//        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\new_pale_data_log.png");
-//        image.show();
-//        IJ.runPlugIn(clazz.getName(), "");
+        Class clazz = Extract_Streets.class;
+        String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
+        String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
+        System.setProperty("plugins.dir", pluginsDir);
+        new ImageJ();
+        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\LoG\\" + EvaluationConstants.FILE_NAME + ".png");
+        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\new_pale_data_log.png");
+        image.show();
+        IJ.runPlugIn(clazz.getName(), "");
     }
 
     private static void evaluate() {
         new ImageJ();
 
+        ImagePlus inputImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\LoG_preprocessed\\" + EvaluationConstants.FILE_NAME + ".png");
         ImagePlus resultImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\result_new\\" + EvaluationConstants.FILE_NAME + ".png");
-        ImageProcessor resultProcessor = resultImage.getProcessor();
-        byte[] resultPixels = (byte[]) resultProcessor.getPixels();
-
         ImagePlus groundTruthImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\ground truth\\" + EvaluationConstants.FILE_NAME + ".png");
+
+        ImagePlus evaluationImage = NewImage.createRGBImage("Evaluation Image", resultImage.getWidth(), resultImage.getHeight(), 1, 4);
+        ImagePlus streetsDetectedImage = NewImage.createRGBImage("streets detected", resultImage.getWidth(), resultImage.getHeight(), 1, 4);
+
+        ManyBlobs resultBlobs = new ManyBlobs(resultImage);
+        resultBlobs.findConnectedComponents();
+        resultBlobs.createLineOrdering();
+
+        double[] precisionRecall = calculatePrecisionRecall(resultBlobs, inputImage, groundTruthImage, evaluationImage);
+        double streetsDetected = calculateStreetsDetected(resultBlobs, resultImage, groundTruthImage, streetsDetectedImage);
+
+        System.out.println("Precision: " + precisionRecall[0]);
+        System.out.println("Recall: " + precisionRecall[1]);
+        System.out.println("Streets detected: " + streetsDetected);
+
+        evaluationImage.show();
+        evaluationImage.updateAndDraw();
+
+        streetsDetectedImage.show();
+        streetsDetectedImage.updateAndDraw();
+
+//        try {
+//            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\quantity_new.txt", true)));
+//            out.println(EvaluationConstants.FILE_NAME + ".png");
+//            out.println("precision: " + precision);
+//            out.println("streets detected: " + streetsDetected);
+//            out.println("--------------------------");
+//            out.close();
+//        } catch (IOException e) {
+//            //exception handling left as an exercise for the reader
+//        }
+    }
+
+    private static double[] calculatePrecisionRecall(ManyBlobs resultBlobs, ImagePlus inputImage, ImagePlus groundTruthImage, ImagePlus evaluationImage) {
         ImageProcessor groundTruthProcessor = groundTruthImage.getProcessor();
 
-        int width = resultProcessor.getWidth();
-        int height = resultProcessor.getHeight();
+        ManyBlobs inputBlobs = new ManyBlobs(inputImage);
+        inputBlobs.findConnectedComponents();
+        inputBlobs.createLineOrdering();
+
+        ImageProcessor evaluationProcessor = evaluationImage.getProcessor();
+        for (Blob blob : inputBlobs) {
+            blob.draw(evaluationProcessor, 0, Color.BLACK);
+        }
+
+        double allRelevant = getRelevantBlobs(inputBlobs, groundTruthProcessor, evaluationImage, false);
+        double right = getRelevantBlobs(resultBlobs, groundTruthProcessor, evaluationImage, true);
+
+        double[] result = new double[2];
+        result[0] = right / resultBlobs.size() * 100;
+        result[1] = right / allRelevant * 100;
+
+        return result;
+    }
+
+    private static double getRelevantBlobs(ManyBlobs inputBlobs, ImageProcessor groundTruthProcessor, ImagePlus evaluationImage, boolean isResultBlob) {
+        ImageProcessor processor = evaluationImage.getProcessor();
+
+        double relevant = 0;
+        for (Blob blob : inputBlobs) {
+            int[] contourX = blob.getLineX();
+            int[] contourY = blob.getLineY();
+            double rightPixels = 0;
+            Color color;
+
+            for (int i = 0; i < blob.getLength(); i++) {
+                if (groundTruthProcessor.getPixel(contourX[i], contourY[i]) == -65316) {
+                    rightPixels++;
+                }
+            }
+
+            if (rightPixels / blob.getLength() > 0.5) {
+                relevant++;
+                color = isResultBlob ? Color.GREEN : Color.ORANGE;
+            } else {
+                color = isResultBlob ? Color.RED : Color.LIGHT_GRAY;
+            }
+
+            blob.draw(processor, 0, color);
+        }
+
+        return relevant;
+    }
+
+    private static double calculateStreetsDetected(ManyBlobs resultBlobs, ImagePlus resultImage, ImagePlus groundTruthImage, ImagePlus evaluationImage) {
+        int width = resultImage.getWidth();
+        int height = resultImage.getHeight();
+
+        ImageProcessor evaluationImageProcessor = evaluationImage.getProcessor();
+        ImageProcessor groundTruthProcessor = groundTruthImage.getProcessor();
 
         ImagePlus skelettonImage = NewImage.createByteImage("skelettonize Image", width, height, 1, 4);
         ByteProcessor skelettonProcessor = (ByteProcessor) skelettonImage.getProcessor();
+
         byte[] skelettonPixels = (byte[]) skelettonProcessor.getPixels();
+        byte[] resultPixels = (byte[]) resultImage.getProcessor().getPixels();
 
-        ImagePlus evaluationImage = NewImage.createRGBImage("Evaluation Image", width, height, 1, 4);
-        ImageProcessor evaluationImageProcessor = evaluationImage.getProcessor();
+        for (Blob blob : resultBlobs) {
+            blob.draw(evaluationImageProcessor, 0, Color.BLACK);
+        }
 
-        int found = 0;
-        int right = 0;
-        int wrong = 0;
-
+        //make manually drawn pixels black
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 if (groundTruthProcessor.getPixel(x, y) == -65316) {
                     skelettonPixels[y * width + x] = 0;
                 }
-
-                if (resultPixels[y * width + x] == 0) {
-                    found++;
-                    if (groundTruthProcessor.getPixel(x, y) == -65316) {
-                        right++;
-                    } else {
-                        wrong++;
-                    }
-                }
             }
         }
 
+        //skeletonize manually drawn streets
         BinaryProcessor binaryProcessor = new BinaryProcessor(skelettonProcessor);
         binaryProcessor.skeletonize();
         byte[] outputPixels = new byte[width * height];
 
+        //disconnect crossed lines
         for (int x = 0; x < width - 1; x++) {
             for (int y = 0; y < height - 1; y++) {
                 int index = y * width + x;
@@ -135,15 +203,7 @@ public class Extract_Streets implements PlugInFilter {
         }
 
         skelettonProcessor.setPixels(outputPixels);
-        skelettonImage.show();
-        skelettonImage.updateAndDraw();
-
-        ManyBlobs resultBlobs = new ManyBlobs(resultImage);
-        resultBlobs.findConnectedComponents();
-
-        for (Blob blob : resultBlobs) {
-            blob.draw(evaluationImageProcessor, 0, Color.BLACK);
-        }
+        skelettonImage.updateImage();
 
         ManyBlobs groundTruthBlobs = new ManyBlobs(skelettonImage);
         groundTruthBlobs.findConnectedComponents();
@@ -151,9 +211,12 @@ public class Extract_Streets implements PlugInFilter {
 
         int sampleRate = 5;
         int maxStreetWidth = 12;
+        double streetsDetected = 0;
+        double allStreets = 0;
 
         for (Blob blob : groundTruthBlobs) {
             if (blob.getLength() > 60) {
+                allStreets++;
                 int[] contourX = blob.getLineX();
                 int[] contourY = blob.getLineY();
                 int max = blob.getLength() - sampleRate;
@@ -189,35 +252,15 @@ public class Extract_Streets implements PlugInFilter {
                 }
 
                 if ((double)foundPixels / max >= 0.5) {
+                    streetsDetected++;
                     blob.draw(evaluationImageProcessor, 0, Color.GREEN);
                 } else {
                     blob.draw(evaluationImageProcessor, 0, Color.RED);
                 }
-
             }
         }
 
-        evaluationImage.show();
-        evaluationImage.updateAndDraw();
-
-        double rightPercent = (double) right / (double) found * 100;
-        double wrongPercent = (double) wrong / (double) found * 100;
-        System.out.println("Right: " + rightPercent + "%");
-        System.out.println("Wrong: " + wrongPercent + "%");
-
-//            try {
-//                PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\quantity_new.txt", true)));
-//                out.println(EvaluationConstants.FILE_NAME + ".png");
-//                out.println("found: " + found);
-//                out.println("right: " + right);
-//                out.println("wrong: " + wrong);
-//                out.println("right %: " + rightPercent);
-//                out.println("wrong %: " + wrongPercent);
-//                out.println("--------------------------");
-//                out.close();
-//            } catch (IOException e) {
-//                //exception handling left as an exercise for the reader
-//            }
+        return  streetsDetected / allStreets * 100;
     }
 
     private static int getNeighborCount(int x, int y, byte[] pixels, int width, int height) {
