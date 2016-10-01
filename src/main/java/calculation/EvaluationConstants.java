@@ -9,8 +9,8 @@ public interface EvaluationConstants {
     EvaluationValues clusteringValues = new EvaluationValues(0, 0, 3);
     EvaluationValues parallelCoverageValues = new EvaluationValues(0.2, 0.5, 3);
     EvaluationValues lineFollowingValues = new EvaluationValues(2, 4, 3);
-    double THRESHOLD = 0.55;
+    double THRESHOLD = 0.6;
 
     String COLORED = "test-pale";
-    String FILE_NAME = "manyStreets";
+    String FILE_NAME = "basic1";
 }

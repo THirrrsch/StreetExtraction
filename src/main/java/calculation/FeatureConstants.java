@@ -9,8 +9,8 @@ public interface FeatureConstants {
     int DBSCAN_EPSILON = 20;
     int DBSCAN_MINPTS = 1;
 
-    //int DBSCAN_EPSILON = 4;
-    //int DBSCAN_MINPTS = 20;
+    //int DBSCAN_EPSILON = 20;
+    //int DBSCAN_MINPTS = 1;
 
     int COLOR_LOOKUP_RADIUS = 10;
     double COLOR_LOOKUP_RATIO = 0.7;

@@ -8,6 +8,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
+import ij.gui.NewImage;
 import ij.gui.NonBlockingGenericDialog;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;

@@ -98,7 +98,7 @@ public class FeatureEvaluator {
         for (int i = 0; i < _inputBlobs.size(); i++) {
             Blob blob = _inputBlobs.get(i);
             EvaluationResult blobResult = results.get(blob);
-            blob.draw(_resultProcessor, 1, Color.LIGHT_GRAY);
+            //blob.draw(_resultProcessor, 1, Color.LIGHT_GRAY);
 
             rt.setValue(1, i, blobResult.getLengthResult());
             rt.setValue(3, i, blobResult.getClusteringResult());

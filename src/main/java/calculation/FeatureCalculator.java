@@ -46,8 +46,8 @@ public class FeatureCalculator {
     }
 
     private void checkClustering() {
-        ImagePlus clusteredImage = NewImage.createByteImage("clustered image", _width, _height, 1, 4);
-        ImageProcessor processor = clusteredImage.getProcessor();
+        //ImagePlus clusteredImage = NewImage.createByteImage("clustered image", _width, _height, 1, 4);
+        //ImageProcessor processor = clusteredImage.getProcessor();
 
         double epsilon = FeatureConstants.DBSCAN_EPSILON;
         int minPts = FeatureConstants.DBSCAN_MINPTS;
@@ -62,15 +62,17 @@ public class FeatureCalculator {
         DBSCANClusterer<BlobWrapper> clusterer = new DBSCANClusterer<BlobWrapper>(epsilon, minPts);
         List<Cluster<BlobWrapper>> clusterResults = clusterer.cluster(clusterInput);
 
+        //System.out.println("Clusters: " + clusterResults.size());
+
         for (Cluster<BlobWrapper> cluster : clusterResults) {
             for (BlobWrapper wrapper : cluster.getPoints()) {
                 wrapper.getBlob().setInCluster(true);
-                wrapper.getBlob().draw(processor);
+                //wrapper.getBlob().draw(processor);
             }
         }
 
-        clusteredImage.show();
-        clusteredImage.updateAndDraw();
+        //clusteredImage.show();
+        //clusteredImage.updateAndDraw();
     }
 
     private void calculateParallelCoverage() {

@@ -109,8 +109,8 @@ public class Blob {
 	
 	public void draw(ImageProcessor ip, int options, Color col){
 		ip.setColor(col);
+		ip.setLineWidth(2);
 		fillPolygon(ip, outerContour, false);
-		
 		
 		if((options&DRAW_HOLES)>0){
 			for (Polygon innerContour : innerContours) {
