@@ -10,6 +10,8 @@ import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.NewImage;
 import ij.gui.NonBlockingGenericDialog;
+import ij.process.BinaryProcessor;
+import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
@@ -109,6 +111,7 @@ public class StreetExtrationDialog implements DialogListener {
             }
         }
     }
+
 
     @Override
     public boolean dialogItemChanged(GenericDialog dialog, AWTEvent awtEvent) {

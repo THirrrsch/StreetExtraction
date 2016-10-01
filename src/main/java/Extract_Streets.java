@@ -10,9 +10,15 @@ import ij.gui.*;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
 import ij.plugin.filter.PlugInFilter;
+import ij.process.BinaryProcessor;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class Extract_Streets implements PlugInFilter {
     private ImagePlus _image;
