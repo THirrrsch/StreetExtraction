@@ -107,16 +107,6 @@ public class FeatureEvaluator {
 
         for (Blob blob : resultBlobs) {
             blob.draw(_resultProcessor);
-            AbstractMap.SimpleEntry<Blob, Point> leftConnection = blob.getLeftConnection();
-            AbstractMap.SimpleEntry<Blob, Point> rightConnection = blob.getRightConnection();
-
-            if (leftConnection != null && resultBlobs.contains(leftConnection.getKey())) {
-                _resultProcessor.drawLine(blob.getLineX()[0], blob.getLineY()[0], leftConnection.getValue().x, leftConnection.getValue().y);
-            }
-
-            if (rightConnection != null && resultBlobs.contains(rightConnection.getKey())) {
-                _resultProcessor.drawLine(blob.getLineX()[blob.getLength()], blob.getLineY()[blob.getLength()], rightConnection.getValue().x, rightConnection.getValue().y);
-            }
         }
 
         rt.show("Results");

@@ -162,7 +162,6 @@ public class FeatureCalculator {
 
             for (int i = 0; i < 2; i++) {
                 Blob lastBlobAdded = blob;
-                boolean directNeighbor = true;
 
                 while (lastBlobAdded != null) {
                     int[] contourX = lastBlobAdded.getLineX();
@@ -188,34 +187,12 @@ public class FeatureCalculator {
                         if (lastBlobAdded != null) {
                             foundFirstPoint = true;
                             segmentCount++;
-
-                            if (directNeighbor) {
-                                Point connectionPoint = new Point(lastBlobAdded.getLineX()[0], lastBlobAdded.getLineY()[0]);
-                                AbstractMap.SimpleEntry<Blob, Point> connection = new AbstractMap.SimpleEntry<Blob, Point>(lastBlobAdded, connectionPoint);
-                                if (i == 0) {
-                                    blob.setRightConnection(connection);
-                                } else {
-                                    blob.setLeftConnection(connection);
-                                }
-                                directNeighbor = false;
-                            }
                             break;
                         } else {
                             lastBlobAdded = this.getLineFollowingBlob(baseAngle, points, mapper, false);
                             if (lastBlobAdded != null) {
                                 foundFirstPoint = false;
                                 segmentCount++;
-
-                                if (directNeighbor) {
-                                    Point connectionPoint = new Point(lastBlobAdded.getLineX()[lastBlobAdded.getLength()], lastBlobAdded.getLineY()[lastBlobAdded.getLength()]);
-                                    AbstractMap.SimpleEntry<Blob, Point> connection = new AbstractMap.SimpleEntry<Blob, Point>(lastBlobAdded, connectionPoint);
-                                    if (i == 0) {
-                                        blob.setRightConnection(connection);
-                                    } else {
-                                        blob.setLeftConnection(connection);
-                                    }
-                                    directNeighbor = false;
-                                }
                                 break;
                             }
                         }

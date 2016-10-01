@@ -55,30 +55,11 @@ public class Blob {
 	private double parallelCoverage = -1;
 	private int lineFollowingElements = -1;
 
-	private AbstractMap.SimpleEntry<Blob, Point> _leftConnection;
-	private AbstractMap.SimpleEntry<Blob, Point> _rightConnection;
-
 	public int getLength() {
 		if (length == -1) {
 			length = getOuterContour().npoints / 2;
 		}
 		return length;
-	}
-
-	public AbstractMap.SimpleEntry getLeftConnection() {
-		return _leftConnection;
-	}
-
-	public AbstractMap.SimpleEntry getRightConnection() {
-		return _rightConnection;
-	}
-
-	public void setLeftConnection(AbstractMap.SimpleEntry<Blob, Point> connection) {
-		_leftConnection = connection;
-	}
-
-	public void setRightConnection(AbstractMap.SimpleEntry<Blob, Point> connection) {
-		_rightConnection = connection;
 	}
 
 	public void setLength(int length) {
