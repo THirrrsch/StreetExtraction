@@ -57,8 +57,8 @@ public class Preprocessor {
         byte[] inputPixels = (byte[]) _inputImage.getProcessor().getPixels();
         byte[] outputPixels = (byte[]) outputImage.getProcessor().getPixels();
 
-        for (int x = 0; x < _width - 1; x++) {
-            for (int y = 0; y < _height - 1; y++) {
+        for (int x = 0; x < _width; x++) {
+            for (int y = 0; y < _height; y++) {
                 int index = y * _width + x;
                 if (inputPixels[index] == 0) {
                     if (this.getNeighborCount(x, y, inputPixels) > 2) {
@@ -94,8 +94,8 @@ public class Preprocessor {
             }
         }
 
-        longLineImage.show();
-        longLineImage.updateAndDraw();
+        //longLineImage.show();
+        //longLineImage.updateAndDraw();
 
         result.setBinaryImage(longLineImage);
         result.createLineOrdering();

@@ -11,6 +11,10 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 public class Extract_Streets implements PlugInFilter {
     private ImagePlus _image;
@@ -27,6 +31,8 @@ public class Extract_Streets implements PlugInFilter {
         Preprocessor preprocessor = new Preprocessor(_image);
         ManyBlobs preprocessedBlobs = preprocessor.process();
         preprocessedBlobs.computeFeatures();
+
+        Utils.printBlobsToCSV(preprocessedBlobs);
 
         ImagePlus resultStack = this.createResultStack(preprocessor);
 
@@ -52,24 +58,24 @@ public class Extract_Streets implements PlugInFilter {
     }
 
     public static void main(String[] args) {
-        //evaluate();
+        evaluate();
 
-        Class clazz = Extract_Streets.class;
-        String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
-        String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
-        System.setProperty("plugins.dir", pluginsDir);
-        new ImageJ();
-        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\LoG\\" + EvaluationConstants.FILE_NAME + ".png");
-        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\new_pale_data_log.png");
-        image.show();
-        IJ.runPlugIn(clazz.getName(), "");
+//        Class clazz = Extract_Streets.class;
+//        String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
+//        String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
+//        System.setProperty("plugins.dir", pluginsDir);
+//        new ImageJ();
+//        ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\LoG\\" + EvaluationConstants.FILE_NAME + ".png");
+//        //ImagePlus image = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\new_pale_data_log.png");
+//        image.show();
+//        IJ.runPlugIn(clazz.getName(), "");
     }
 
     private static void evaluate() {
         new ImageJ();
 
-        ImagePlus inputImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\LoG_preprocessed\\" + EvaluationConstants.FILE_NAME + ".png");
-        ImagePlus resultImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\result_new\\" + EvaluationConstants.FILE_NAME + ".png");
+        ImagePlus inputImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\canny_preprocessed\\" + EvaluationConstants.FILE_NAME + ".png");
+        ImagePlus resultImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\result_old\\" + EvaluationConstants.FILE_NAME + ".png");
         ImagePlus groundTruthImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\ground truth\\" + EvaluationConstants.FILE_NAME + ".png");
 
         ImagePlus evaluationImage = NewImage.createRGBImage("Evaluation Image", resultImage.getWidth(), resultImage.getHeight(), 1, 4);
@@ -80,11 +86,12 @@ public class Extract_Streets implements PlugInFilter {
         resultBlobs.createLineOrdering();
 
         double[] precisionRecall = calculatePrecisionRecall(resultBlobs, inputImage, groundTruthImage, evaluationImage);
-        double streetsDetected = calculateStreetsDetected(resultBlobs, resultImage, groundTruthImage, streetsDetectedImage);
+        double[] streetsDetected = calculateStreetsDetected(resultBlobs, resultImage, groundTruthImage, streetsDetectedImage);
 
         System.out.println("Precision: " + precisionRecall[0]);
         System.out.println("Recall: " + precisionRecall[1]);
-        System.out.println("Streets detected: " + streetsDetected);
+        System.out.println("Detected street coverage: " + streetsDetected[0]);
+        System.out.println("Detected streets: " + streetsDetected[1]);
 
         evaluationImage.show();
         evaluationImage.updateAndDraw();
@@ -92,16 +99,18 @@ public class Extract_Streets implements PlugInFilter {
         streetsDetectedImage.show();
         streetsDetectedImage.updateAndDraw();
 
-//        try {
-//            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\quantity_new.txt", true)));
-//            out.println(EvaluationConstants.FILE_NAME + ".png");
-//            out.println("precision: " + precision);
-//            out.println("streets detected: " + streetsDetected);
-//            out.println("--------------------------");
-//            out.close();
-//        } catch (IOException e) {
-//            //exception handling left as an exercise for the reader
-//        }
+        try {
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\quantity_old.txt", true)));
+            out.println(EvaluationConstants.FILE_NAME + ".png");
+            out.println("precision: " + precisionRecall[0]);
+            out.println("recall: " + precisionRecall[1]);
+            out.println("Detected street coverage: " + streetsDetected[0]);
+            out.println("Detected streets: " + streetsDetected[1]);
+            out.println("--------------------------");
+            out.close();
+        } catch (IOException e) {
+            //exception handling left as an exercise for the reader
+        }
     }
 
     private static double[] calculatePrecisionRecall(ManyBlobs resultBlobs, ImagePlus inputImage, ImagePlus groundTruthImage, ImagePlus evaluationImage) {
@@ -155,7 +164,7 @@ public class Extract_Streets implements PlugInFilter {
         return relevant;
     }
 
-    private static double calculateStreetsDetected(ManyBlobs resultBlobs, ImagePlus resultImage, ImagePlus groundTruthImage, ImagePlus evaluationImage) {
+    private static double[] calculateStreetsDetected(ManyBlobs resultBlobs, ImagePlus resultImage, ImagePlus groundTruthImage, ImagePlus evaluationImage) {
         int width = resultImage.getWidth();
         int height = resultImage.getHeight();
 
@@ -187,8 +196,8 @@ public class Extract_Streets implements PlugInFilter {
         byte[] outputPixels = new byte[width * height];
 
         //disconnect crossed lines
-        for (int x = 0; x < width - 1; x++) {
-            for (int y = 0; y < height - 1; y++) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 int index = y * width + x;
                 if (skelettonPixels[index] == 0) {
                     if (getNeighborCount(x, y, skelettonPixels, width, height) > 2) {
@@ -210,7 +219,10 @@ public class Extract_Streets implements PlugInFilter {
         groundTruthBlobs.createLineOrdering();
 
         int sampleRate = 5;
-        int maxStreetWidth = 12;
+        int maxStreetWidth = 28;
+
+        double pointsDetected = 0;
+        double allPoints = 0;
         double streetsDetected = 0;
         double allStreets = 0;
 
@@ -251,6 +263,8 @@ public class Extract_Streets implements PlugInFilter {
                     }
                 }
 
+                pointsDetected += foundPixels;
+                allPoints += max;
                 if ((double)foundPixels / max >= 0.5) {
                     streetsDetected++;
                     blob.draw(evaluationImageProcessor, 0, Color.GREEN);
@@ -260,7 +274,11 @@ public class Extract_Streets implements PlugInFilter {
             }
         }
 
-        return  streetsDetected / allStreets * 100;
+        double[] result = new double[2];
+        result[0] = pointsDetected / allPoints * 100;
+        result[1] = streetsDetected / allStreets * 100;
+
+        return result;
     }
 
     private static int getNeighborCount(int x, int y, byte[] pixels, int width, int height) {
