@@ -111,14 +111,18 @@ public class Utils {
     public static void printBlobsToCSV(ManyBlobs blobs) {
         try
         {
-            FileWriter writer = new FileWriter("C:\\Users\\Hirsch\\Desktop\\test.csv");
+            FileWriter writer = new FileWriter("C:\\Users\\Hirsch\\Desktop\\test2.csv");
 
             for (Blob blob : blobs) {
                 double angle = Utils.getAngle180Positive(blob.getLineX()[0], blob.getLineX()[blob.getLength()], blob.getLineY()[0], blob.getLineY()[blob.getLength()]);
 
-                writer.append(String.valueOf(blob.getLength()));
+//                writer.append(String.valueOf(blob.getLength()));
+//                writer.append(' ');
+//                writer.append(String.valueOf(angle));
                 writer.append(' ');
-                writer.append(String.valueOf(angle));
+                writer.append(String.valueOf(blob.getCentroid().x));
+                writer.append(' ');
+                writer.append(String.valueOf(blob.getCentroid().y));
                 writer.append('\n');
             }
 

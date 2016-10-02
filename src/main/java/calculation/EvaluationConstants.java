@@ -11,6 +11,6 @@ public interface EvaluationConstants {
     EvaluationValues lineFollowingValues = new EvaluationValues(2, 4, 3);
     double THRESHOLD = 0.6;
 
-    String COLORED = "test-pale";
-    String FILE_NAME = "land1";
+    String COLORED = "test-colored";
+    String FILE_NAME = "basic1";
 }

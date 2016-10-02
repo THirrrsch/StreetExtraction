@@ -74,7 +74,7 @@ public class Extract_Streets implements PlugInFilter {
     private static void evaluate() {
         new ImageJ();
 
-        ImagePlus inputImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\canny_preprocessed\\" + EvaluationConstants.FILE_NAME + ".png");
+        ImagePlus inputImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\LoG_preprocessed\\" + EvaluationConstants.FILE_NAME + ".png");
         ImagePlus resultImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\result_old\\" + EvaluationConstants.FILE_NAME + ".png");
         ImagePlus groundTruthImage = IJ.openImage("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\ground truth\\" + EvaluationConstants.FILE_NAME + ".png");
 
@@ -100,7 +100,7 @@ public class Extract_Streets implements PlugInFilter {
         streetsDetectedImage.updateAndDraw();
 
         try {
-            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\quantity_old.txt", true)));
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Hirsch\\Desktop\\Forschungsprojekt\\" + EvaluationConstants.COLORED + "\\quantity_new.txt", true)));
             out.println(EvaluationConstants.FILE_NAME + ".png");
             out.println("precision: " + precisionRecall[0]);
             out.println("recall: " + precisionRecall[1]);
